@@ -12,7 +12,10 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top py-2">
+    <nav
+      className="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top py-2"
+      style={{ zIndex: 1040 }}
+    >
       <div className="container">
         {/* Brand */}
         <Link to="/" className="navbar-brand d-flex align-items-center fw-bold text-primary">
