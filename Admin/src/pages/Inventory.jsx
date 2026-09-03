@@ -322,7 +322,7 @@ const Inventory = () => {
             <Loading message="Loading physical inventory records..." />
           ) : inventoryItems.length > 0 ? (
             <>
-              <div className="table-responsive">
+              <div className="table-responsive table-responsive-dropdown">
                 <table className="table table-hover align-middle mb-0 bg-white small">
                   <thead className="table-light">
                     <tr>
@@ -399,31 +399,43 @@ const Inventory = () => {
                           </td>
                           <td className="text-center">{getStatusBadge(inv)}</td>
                           <td className="text-end">
-                            <div className="dropdown">
+                            <div className={`dropdown ${idx >= inventoryItems.length - 2 && inventoryItems.length > 2 ? 'dropup' : ''}`}>
                               <button
-                                className="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                className={`btn btn-sm dropdown-toggle ${
+                                  inv.availableCopies <= (inv.lowStockThreshold || 2)
+                                    ? 'btn-outline-warning text-dark fw-semibold'
+                                    : 'btn-outline-secondary'
+                                }`}
                                 type="button"
                                 data-bs-toggle="dropdown"
+                                data-bs-auto-close="true"
                                 aria-expanded="false"
                               >
                                 Manage
                               </button>
-                              <ul className="dropdown-menu dropdown-menu-end shadow-sm small">
+                              <ul className="dropdown-menu dropdown-menu-end shadow small table-dropdown-menu">
                                 <li>
                                   <Link className="dropdown-item" to={`/inventory/${book._id}`}>
                                     <i className="bi bi-clock-history me-2 text-primary"></i>
                                     View Movement Audit Log
                                   </Link>
                                 </li>
-                                <li><hr className="dropdown-divider" /></li>
+                                <li><hr className="dropdown-divider my-1" /></li>
                                 <li>
                                   <button
-                                    className="dropdown-item"
+                                    className="dropdown-item d-flex align-items-center justify-content-between"
                                     type="button"
                                     onClick={() => openActionModal(inv, 'STOCK_IN')}
                                   >
-                                    <i className="bi bi-plus-circle me-2 text-success"></i>
-                                    Add Stock (Stock In)
+                                    <span>
+                                      <i className="bi bi-plus-circle me-2 text-success"></i>
+                                      Add Stock (Stock In)
+                                    </span>
+                                    {inv.availableCopies <= (inv.lowStockThreshold || 2) && (
+                                      <span className="badge bg-warning-subtle text-warning-emphasis ms-2" style={{ fontSize: '10px' }}>
+                                        Restock
+                                      </span>
+                                    )}
                                   </button>
                                 </li>
                                 <li>

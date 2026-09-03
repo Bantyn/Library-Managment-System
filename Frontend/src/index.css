@@ -59,11 +59,11 @@
      3. CENTRALIZED BORDER RADIUS TOKENS
      ======================================================================== */
   --radius-none: 0px;
-  --radius-xs: 0.25rem;   /* 4px  - badges, small tags */
-  --radius-sm: 0.375rem;  /* 6px  - small buttons, subtle elements */
-  --radius-md: 0.5rem;    /* 8px  - default cards, inputs, standard buttons */
-  --radius-lg: 0.75rem;   /* 12px - modals, elevated cards */
-  --radius-xl: 1rem;      /* 16px - prominent hero surfaces */
+  --radius-xs: 0.375rem;  /* 6px  - badges, small tags */
+  --radius-sm: 0.5rem;    /* 8px  - small buttons, subtle elements */
+  --radius-md: 0.75rem;   /* 12px - default cards, inputs, standard buttons */
+  --radius-lg: 1rem;      /* 16px - modals, elevated cards */
+  --radius-xl: 1.5rem;    /* 24px - prominent hero surfaces */
   --radius-pill: 50rem;   /* pills & full circular avatars */
 
   /* Component Border Radius Overrides */
