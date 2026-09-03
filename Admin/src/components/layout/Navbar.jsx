@@ -27,7 +27,7 @@ const Navbar = ({ onToggleSidebar }) => {
             className="me-2"
           />
           <span className="navbar-text fw-semibold text-dark d-none d-sm-inline">
-            Library Management Portal
+            PustakSetu Admin Portal
           </span>
         </div>
 

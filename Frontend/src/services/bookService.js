@@ -16,4 +16,9 @@ export const bookService = {
     const response = await api.get(`/books/${id}`);
     return response.data;
   },
+
+  getPublicStats: async () => {
+    const response = await api.get('/books/public-stats');
+    return response.data;
+  },
 };

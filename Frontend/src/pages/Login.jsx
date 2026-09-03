@@ -74,13 +74,18 @@ const Login = () => {
       <div className="container">
         <div className="row justify-content-center">
           <div className="col-12 col-sm-10 col-md-8 col-lg-5">
+            <div className="mb-3">
+              <Link to="/" className="text-decoration-none text-secondary small d-inline-flex align-items-center">
+                <i className="bi bi-arrow-left me-1"></i> Back to Home
+              </Link>
+            </div>
             <div className="card border-0 shadow-sm rounded-3">
               <div className="card-body p-4 p-md-5">
                 {/* Header */}
                 <div className="text-center mb-4">
                   <img
                     src="/library-logo.png"
-                    alt="Campus Library Logo"
+                    alt="PustakSetu Logo"
                     width="60"
                     height="60"
                     className="mb-2"

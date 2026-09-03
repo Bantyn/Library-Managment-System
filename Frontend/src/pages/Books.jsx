@@ -41,6 +41,15 @@ const Books = () => {
     fetchCats();
   }, []);
 
+  // Synchronize state when URL query params change (e.g. from Home category click)
+  useEffect(() => {
+    const cat = searchParams.get('category') || '';
+    const search = searchParams.get('search') || '';
+    setSelectedCategory(cat);
+    setSearchTerm(search);
+    setCurrentPage(1);
+  }, [searchParams]);
+
   // Fetch books with search and category combined
   const fetchBooks = useCallback(async () => {
     setLoading(true);

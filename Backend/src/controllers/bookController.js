@@ -2,6 +2,7 @@ const Book = require('../models/Book');
 const Category = require('../models/Category');
 const Issue = require('../models/Issue');
 const Inventory = require('../models/Inventory');
+const User = require('../models/User');
 const inventoryService = require('../services/inventoryService');
 
 // @desc    Get all books with search, filter, and pagination
@@ -375,9 +376,48 @@ const deleteBook = async (req, res, next) => {
   }
 };
 
+// @desc    Get public live library statistics for Homepage
+// @route   GET /api/books/public-stats
+// @access  Public
+const getPublicStats = async (req, res, next) => {
+  try {
+    const [totalBooks, totalCategories, stockAgg, activeLoans, totalMembers] = await Promise.all([
+      Book.countDocuments({ isDeleted: { $ne: true } }),
+      Category.countDocuments({ isDeleted: { $ne: true } }),
+      Book.aggregate([
+        { $match: { isDeleted: { $ne: true } } },
+        {
+          $group: {
+            _id: null,
+            totalAvailable: { $sum: '$availableCopies' },
+            totalCopies: { $sum: '$totalCopies' },
+          },
+        },
+      ]),
+      Issue.countDocuments({ status: { $in: ['issued', 'overdue'] } }),
+      User.countDocuments({ role: 'student', isDeleted: { $ne: true } }),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalBooks,
+        totalCategories,
+        totalCopies: stockAgg[0]?.totalCopies || 0,
+        availableCopies: stockAgg[0]?.totalAvailable || 0,
+        activeLoans,
+        totalStudents: totalMembers,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getBooks,
   getBookById,
+  getPublicStats,
   createBook,
   updateBook,
   deleteBook,

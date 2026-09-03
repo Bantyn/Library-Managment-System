@@ -41,8 +41,8 @@ const Sidebar = ({ isOpen, onClose }) => {
         {/* Brand Header */}
         <div className="p-3 border-bottom d-flex align-items-center justify-content-between">
           <div className="d-flex align-items-center text-primary text-decoration-none fw-bold fs-5">
-            <img src="/library-logo.png" alt="LibraryAdmin Logo" width="30" height="30" className="me-2" />
-            <span>LibraryAdmin</span>
+            <img src="/library-logo.png" alt="PustakSetu Logo" width="30" height="30" className="me-2" />
+            <span>PustakSetu</span>
           </div>
           <button
             type="button"

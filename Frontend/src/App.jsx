@@ -19,13 +19,16 @@ import NotFound from './pages/NotFound';
 function App() {
   return (
     <Routes>
+      {/* Standalone Auth Routes (No Navbar / Header or Footer) */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+
+      {/* Main Pages with UserLayout (Navbar & Footer) */}
       <Route element={<UserLayout />}>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/books" element={<Books />} />
         <Route path="/books/:id" element={<BookDetails />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
 
         {/* Student Protected Routes */}
         <Route element={<ProtectedRoute />}>

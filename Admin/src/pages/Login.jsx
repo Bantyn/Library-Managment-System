@@ -84,7 +84,7 @@ const Login = () => {
               height="64"
               className="mb-2"
             />
-            <h4 className="fw-bold text-dark mb-1">Library Admin Portal</h4>
+            <h4 className="fw-bold text-dark mb-1">PustakSetu Admin Portal</h4>
             <p className="text-muted small mb-0">
               Sign in to manage catalog, circulation, members, and reports
             </p>

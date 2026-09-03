@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   getBooks,
   getBookById,
+  getPublicStats,
   createBook,
   updateBook,
   deleteBook,
@@ -12,6 +13,7 @@ const { adminOnly } = require('../middleware/adminMiddleware');
 const upload = require('../middleware/uploadMiddleware');
 
 router.get('/', getBooks);
+router.get('/public-stats', getPublicStats);
 router.get('/:id', getBookById);
 
 // Admin-protected routes (supports optional image upload via multipart/form-data)

@@ -16,8 +16,8 @@ const Navbar = () => {
       <div className="container">
         {/* Brand */}
         <Link to="/" className="navbar-brand d-flex align-items-center fw-bold text-primary">
-          <img src="/library-logo.png" alt="CampusLibrary Logo" width="32" height="32" className="me-2" />
-          <span>CampusLibrary</span>
+          <img src="/library-logo.png" alt="PustakSetu Logo" width="32" height="32" className="me-2" />
+          <span>PustakSetu</span>
         </Link>
 
         {/* Mobile Toggle Button */}

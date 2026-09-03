@@ -28,7 +28,7 @@ const AdminLayout = () => {
         </main>
 
         <footer className="py-3 px-4 border-top bg-white text-center text-muted small">
-          © {new Date().getFullYear()} Library Management System — Bachelor Academic Project
+          © {new Date().getFullYear()} PustakSetu — Library Management System
         </footer>
       </div>
     </div>

@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const BookCard = ({ book }) => {
+  const [imageError, setImageError] = useState(false);
+
   const getAvailabilityBadge = () => {
     if (book.availableCopies === 0) {
       return (
@@ -38,21 +40,23 @@ const BookCard = ({ book }) => {
           className="bg-light d-flex align-items-center justify-content-center position-relative border-bottom"
           style={{ height: '170px', overflow: 'hidden' }}
         >
-          {coverUrl ? (
+          {coverUrl && !imageError ? (
             <img
               src={coverUrl}
               alt={book.title}
               className="w-100 h-100 object-fit-cover"
-              onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.parentElement.innerHTML =
-                  '<div class="text-center text-muted p-3"><i class="bi bi-book fs-1 d-block mb-1"></i><span class="small">No Cover Image</span></div>';
-              }}
+              onError={() => setImageError(true)}
             />
           ) : (
             <div className="text-center text-muted p-3">
-              <i className="bi bi-book fs-1 d-block mb-1 text-secondary"></i>
-              <span className="small text-secondary">No Cover Image</span>
+              <img
+                width="48"
+                height="48"
+                src="https://img.icons8.com/parakeet-partial-filled/48/image.png"
+                alt="image"
+                className="mb-1"
+              />
+              <span className="small d-block text-secondary">No Cover Image</span>
             </div>
           )}
 
