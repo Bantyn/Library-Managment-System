@@ -1,10 +1,17 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -13,8 +20,8 @@ const Navbar = () => {
 
   return (
     <nav
-      className="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top py-2"
-      style={{ zIndex: 1040 }}
+      className={`navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top py-2${scrolled ? ' ps-navbar-scrolled' : ''}`}
+      style={{ zIndex: 1040, transition: 'box-shadow 0.3s ease' }}
     >
       <div className="container">
         {/* Brand */}

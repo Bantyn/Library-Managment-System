@@ -424,3 +424,14 @@ code {
   color: #8d5b00 !important;
 }
 
+/* Dedicated: Remove any focus outline, border, or box-shadow ONLY for search inputs */
+.search-input-no-focus,
+.search-input-no-focus:focus,
+.search-input-no-focus:active,
+.search-input-no-focus:focus-visible {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+}
+

@@ -1,0 +1,343 @@
+/* ==========================================================================
+   PustakSetu — Home Page Scroll & Hero Animations
+   Pure CSS: keyframes + Intersection Observer (via React hooks)
+   Performance: GPU-only (transform + opacity). Zero layout shifts.
+   Accessibility: respects prefers-reduced-motion
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Keyframe Definitions
+   -------------------------------------------------------------------------- */
+@keyframes ps-fadeUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ps-fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes ps-fadeLeft {
+  from { opacity: 0; transform: translateX(28px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes ps-fadeRight {
+  from { opacity: 0; transform: translateX(-28px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes ps-fadeScale {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes ps-floatSlow {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
+}
+
+@keyframes ps-pulseSoft {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%       { opacity: 0.75; transform: scale(1.05); }
+}
+
+@keyframes ps-countUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ps-shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+/* --------------------------------------------------------------------------
+   2. Hero Initial-Load Animations (sequential on mount)
+   -------------------------------------------------------------------------- */
+.ps-hero-badge {
+  opacity: 0;
+  animation: ps-fadeUp 0.55s ease forwards;
+  animation-delay: 0.05s;
+}
+
+.ps-hero-heading {
+  opacity: 0;
+  animation: ps-fadeUp 0.6s ease forwards;
+  animation-delay: 0.18s;
+}
+
+.ps-hero-desc {
+  opacity: 0;
+  animation: ps-fadeUp 0.6s ease forwards;
+  animation-delay: 0.32s;
+}
+
+.ps-hero-search {
+  opacity: 0;
+  animation: ps-fadeUp 0.6s ease forwards;
+  animation-delay: 0.46s;
+}
+
+.ps-hero-cta {
+  opacity: 0;
+  animation: ps-fadeUp 0.6s ease forwards;
+  animation-delay: 0.6s;
+}
+
+.ps-hero-card {
+  opacity: 0;
+  animation: ps-fadeLeft 0.7s ease forwards;
+  animation-delay: 0.3s;
+}
+
+/* --------------------------------------------------------------------------
+   3. Floating Decorative Elements (subtle, looping)
+   -------------------------------------------------------------------------- */
+.ps-float-1 {
+  animation: ps-floatSlow 5s ease-in-out infinite;
+}
+.ps-float-2 {
+  animation: ps-floatSlow 6.5s ease-in-out infinite;
+  animation-delay: -2s;
+}
+.ps-float-3 {
+  animation: ps-floatSlow 7s ease-in-out infinite;
+  animation-delay: -4s;
+}
+
+.ps-deco-bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 224, 130, 0.18);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* --------------------------------------------------------------------------
+   4. Scroll Reveal — base state (invisible off-screen)
+   -------------------------------------------------------------------------- */
+.ps-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.55s ease, transform 0.55s ease;
+}
+.ps-reveal.ps-reveal--left {
+  transform: translateX(-28px);
+}
+.ps-reveal.ps-reveal--right {
+  transform: translateX(28px);
+}
+.ps-reveal.ps-reveal--scale {
+  transform: scale(0.95);
+}
+
+/* Visible state: triggered by Intersection Observer */
+.ps-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0) translateX(0) scale(1);
+}
+
+/* Staggered child reveals inside a reveal group */
+.ps-stagger-group .ps-stagger-item {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+.ps-stagger-group.is-visible .ps-stagger-item:nth-child(1) { opacity: 1; transform: none; transition-delay: 0s; }
+.ps-stagger-group.is-visible .ps-stagger-item:nth-child(2) { opacity: 1; transform: none; transition-delay: 0.08s; }
+.ps-stagger-group.is-visible .ps-stagger-item:nth-child(3) { opacity: 1; transform: none; transition-delay: 0.16s; }
+.ps-stagger-group.is-visible .ps-stagger-item:nth-child(4) { opacity: 1; transform: none; transition-delay: 0.24s; }
+.ps-stagger-group.is-visible .ps-stagger-item:nth-child(5) { opacity: 1; transform: none; transition-delay: 0.32s; }
+.ps-stagger-group.is-visible .ps-stagger-item:nth-child(6) { opacity: 1; transform: none; transition-delay: 0.40s; }
+.ps-stagger-group.is-visible .ps-stagger-item:nth-child(7) { opacity: 1; transform: none; transition-delay: 0.48s; }
+.ps-stagger-group.is-visible .ps-stagger-item:nth-child(8) { opacity: 1; transform: none; transition-delay: 0.56s; }
+
+/* --------------------------------------------------------------------------
+   5. Statistics Count-Up Reveal
+   -------------------------------------------------------------------------- */
+.ps-stat-number {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.ps-stagger-group.is-visible .ps-stagger-item:nth-child(1) .ps-stat-number { opacity: 1; transform: none; transition-delay: 0.1s; }
+.ps-stagger-group.is-visible .ps-stagger-item:nth-child(2) .ps-stat-number { opacity: 1; transform: none; transition-delay: 0.2s; }
+.ps-stagger-group.is-visible .ps-stagger-item:nth-child(3) .ps-stat-number { opacity: 1; transform: none; transition-delay: 0.3s; }
+.ps-stagger-group.is-visible .ps-stagger-item:nth-child(4) .ps-stat-number { opacity: 1; transform: none; transition-delay: 0.4s; }
+
+/* --------------------------------------------------------------------------
+   6. Book Card Hover Effects
+   -------------------------------------------------------------------------- */
+.ps-book-card {
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  will-change: transform;
+}
+.ps-book-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 28px rgba(141, 91, 0, 0.13) !important;
+}
+.ps-book-card .ps-book-thumb {
+  transition: transform 0.35s ease;
+  overflow: hidden;
+}
+.ps-book-card:hover .ps-book-thumb img {
+  transform: scale(1.06);
+}
+.ps-book-card .card-img-overlay-transition {
+  transition: opacity 0.2s ease;
+}
+
+/* --------------------------------------------------------------------------
+   7. Category Card Hover Effects
+   -------------------------------------------------------------------------- */
+.ps-cat-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  will-change: transform;
+}
+.ps-cat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.09) !important;
+  background-color: #fff8e1 !important;
+}
+.ps-cat-card .ps-cat-icon {
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+.ps-cat-card:hover .ps-cat-icon {
+  transform: scale(1.12);
+  background-color: #FFE082 !important;
+}
+
+/* --------------------------------------------------------------------------
+   8. Feature Card Hover Effects
+   -------------------------------------------------------------------------- */
+.ps-feature-card {
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  will-change: transform;
+}
+.ps-feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(141, 91, 0, 0.1) !important;
+}
+.ps-feature-card .ps-feature-icon {
+  transition: transform 0.2s ease;
+}
+.ps-feature-card:hover .ps-feature-icon {
+  transform: scale(1.1) rotate(-4deg);
+}
+
+/* --------------------------------------------------------------------------
+   9. Library Card ID Shimmer Pulse
+   -------------------------------------------------------------------------- */
+.ps-card-id {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 224, 130, 0.45) 50%,
+    transparent 100%
+  );
+  background-size: 400px 100%;
+  animation: ps-shimmer 3.5s ease-in-out infinite;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+/* --------------------------------------------------------------------------
+   10. CTA Button Hover
+   -------------------------------------------------------------------------- */
+.ps-cta-btn-primary {
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.ps-cta-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 224, 130, 0.55) !important;
+}
+.ps-cta-btn-outline {
+  transition: transform 0.18s ease, background-color 0.18s ease;
+}
+.ps-cta-btn-outline:hover {
+  transform: translateY(-2px);
+}
+
+/* --------------------------------------------------------------------------
+   11. Navbar scroll shadow enhancement
+   -------------------------------------------------------------------------- */
+.ps-navbar-scrolled {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08) !important;
+  transition: box-shadow 0.3s ease;
+}
+
+/* --------------------------------------------------------------------------
+   12. Section Hero decorative background
+   -------------------------------------------------------------------------- */
+.ps-hero-section {
+  position: relative;
+  /* NO overflow:hidden here — that was clipping the search dropdown */
+}
+
+/* Dedicated clipping layer — only the bubbles live here */
+.ps-hero-deco-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ps-hero-section .ps-deco-1 {
+  width: 220px; height: 220px;
+  top: -60px; right: -60px;
+  animation: ps-pulseSoft 7s ease-in-out infinite;
+}
+.ps-hero-section .ps-deco-2 {
+  width: 120px; height: 120px;
+  bottom: 20px; left: -30px;
+  animation: ps-pulseSoft 9s ease-in-out infinite;
+  animation-delay: -3s;
+}
+.ps-hero-section .ps-deco-3 {
+  width: 64px; height: 64px;
+  top: 30%; left: 45%;
+  animation: ps-floatSlow 8s ease-in-out infinite;
+  animation-delay: -1.5s;
+  background: rgba(255, 224, 130, 0.1) !important;
+}
+
+/* --------------------------------------------------------------------------
+   13. Accessibility: Respect prefers-reduced-motion
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .ps-hero-badge,
+  .ps-hero-heading,
+  .ps-hero-desc,
+  .ps-hero-search,
+  .ps-hero-cta,
+  .ps-hero-card {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .ps-float-1, .ps-float-2, .ps-float-3,
+  .ps-deco-bubble,
+  .ps-card-id {
+    animation: none !important;
+  }
+
+  .ps-reveal,
+  .ps-stagger-group .ps-stagger-item,
+  .ps-stat-number {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .ps-book-card:hover,
+  .ps-cat-card:hover,
+  .ps-feature-card:hover,
+  .ps-cta-btn-primary:hover,
+  .ps-cta-btn-outline:hover {
+    transform: none !important;
+  }
+}

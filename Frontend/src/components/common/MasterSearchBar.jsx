@@ -112,7 +112,7 @@ const MasterSearchBar = ({
     setLoading(true);
     debounceTimerRef.current = setTimeout(() => {
       performSearch(val);
-    }, 280);
+    }, 250);
   };
 
   const handleSubmit = (e) => {
@@ -150,35 +150,41 @@ const MasterSearchBar = ({
   return (
     <div
       ref={containerRef}
-      className={`position-relative master-search-wrapper ${className}`}
-      style={{ zIndex: 1050 }}
+      className={`position-relative w-100 ${className}`}
+      style={{ zIndex: 2 }}
     >
-      <form onSubmit={handleSubmit} className="w-100">
+      <form onSubmit={handleSubmit} className="w-100 m-0">
         <div
-          className={`input-group shadow-sm rounded-pill overflow-hidden bg-white border ${
-            isOpen ? 'border-warning' : 'border-secondary-subtle'
-          }`}
-          style={{ transition: 'border-color 0.2s ease, box-shadow 0.2s ease' }}
+          className="d-flex align-items-center bg-white rounded-pill border border-secondary-subtle p-1 shadow-sm"
+          style={{
+            minHeight: isLarge ? '52px' : '44px',
+          }}
         >
-          {/* Search Icon / Spinner */}
-          <span className={`input-group-text bg-white border-0 ps-3 pe-2 text-secondary`}>
+          {/* Search Icon or Loading Spinner */}
+          <div className="ps-3 pe-2 text-secondary d-flex align-items-center flex-shrink-0">
             {loading ? (
               <span
                 className="spinner-border spinner-border-sm text-warning"
                 role="status"
                 aria-hidden="true"
+                style={{ width: '1.1rem', height: '1.1rem' }}
               ></span>
             ) : (
-              <i className={`bi bi-search ${isLarge ? 'fs-5' : 'fs-6'}`}></i>
+              <i className={`bi bi-search text-secondary ${isLarge ? 'fs-5' : 'fs-6'}`}></i>
             )}
-          </span>
+          </div>
 
-          {/* Search Input */}
+          {/* Search Input Field */}
           <input
             type="text"
-            className={`form-control border-0 bg-white shadow-none ${
-              isLarge ? 'py-3 fs-6' : 'py-2 small'
-            }`}
+            className="form-control border-0 bg-transparent shadow-none px-2 text-dark search-input-no-focus"
+            style={{
+              fontSize: isLarge ? '1rem' : '0.9rem',
+              fontWeight: 400,
+              outline: 'none',
+              boxShadow: 'none',
+              border: 'none',
+            }}
             placeholder={placeholder}
             value={query}
             onChange={handleInputChange}
@@ -195,23 +201,25 @@ const MasterSearchBar = ({
           {query && (
             <button
               type="button"
-              className="btn bg-white border-0 text-muted px-2"
+              className="btn btn-link p-0 text-muted me-2 text-decoration-none d-flex align-items-center flex-shrink-0"
               onClick={handleClear}
               title="Clear search"
+              aria-label="Clear search input"
             >
-              <i className="bi bi-x-circle-fill fs-6"></i>
+              <i className="bi bi-x-circle-fill fs-5 text-secondary"></i>
             </button>
           )}
 
-          {/* Submit Action Button */}
+          {/* Submit Search Button */}
           <button
             type="submit"
-            className={`btn btn-primary text-dark fw-semibold px-4 border-0 d-flex align-items-center ${
-              isLarge ? 'px-4' : 'px-3'
+            className={`btn btn-primary text-dark fw-semibold rounded-pill d-flex align-items-center flex-shrink-0 shadow-sm ${
+              isLarge ? 'px-4 py-2' : 'px-3 py-1 small'
             }`}
+            style={{ border: 'none' }}
           >
             <span>Search</span>
-            <i className="bi bi-arrow-right ms-2 d-none d-sm-inline"></i>
+            <i className="bi bi-arrow-right ms-1"></i>
           </button>
         </div>
       </form>
@@ -221,11 +229,12 @@ const MasterSearchBar = ({
           =================================================================== */}
       {isOpen && (
         <div
-          className="position-absolute start-0 end-0 mt-2 bg-white rounded-3 shadow-lg border overflow-hidden master-search-dropdown"
+          className="position-absolute start-0 end-0 mt-2 bg-white rounded-4 shadow-lg border overflow-hidden"
           style={{
-            maxHeight: '420px',
+            zIndex: 1050,
+            maxHeight: '400px',
             overflowY: 'auto',
-            animation: 'fadeIn 0.15s ease-in-out',
+            boxShadow: '0 12px 36px rgba(0, 0, 0, 0.12)',
           }}
         >
           {results.length > 0 ? (
