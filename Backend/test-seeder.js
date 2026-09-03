@@ -1,6 +1,11 @@
+const dns = require('dns');
 const axios = require('axios');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
+} catch (e) {}
 
 dotenv.config();
 
