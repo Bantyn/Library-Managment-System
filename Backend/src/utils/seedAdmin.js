@@ -6,6 +6,8 @@ try {
   dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
 } catch (e) {}
 
+const User = require('../models/User');
+
 dotenv.config();
 
 const seedAdmin = async () => {
