@@ -21,8 +21,21 @@ export const categoryService = {
     return response.data;
   },
 
+  // Soft delete — moves category to trash
   deleteCategory: async (id) => {
     const response = await api.delete(`/categories/${id}`);
+    return response.data;
+  },
+
+  // Restore from trash
+  restoreCategory: async (id) => {
+    const response = await api.put(`/categories/${id}/restore`);
+    return response.data;
+  },
+
+  // Permanent hard delete
+  hardDeleteCategory: async (id) => {
+    const response = await api.delete(`/categories/${id}/permanent`);
     return response.data;
   },
 };

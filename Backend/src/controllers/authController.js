@@ -132,30 +132,39 @@ const login = async (req, res, next) => {
       });
     }
 
-    const user = await User.findOne({ email });
+    // Find user by email
+const user = await User.findOne({ email });
 
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid email or password.',
-      });
-    }
 
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid email or password.',
-      });
-    }
+// Email does not exist
+if (!user) {
+  return res.status(404).json({
+    success: false,
+    message: 'Incorrect email. No user found with this email.',
+  });
+}
 
-    if (!user.isActive) {
-      return res.status(403).json({
-        success: false,
-        message: 'Account is deactivated. Please contact the administrator.',
-      });
-    }
 
+// Check password
+const isMatch = await user.comparePassword(password);
+
+
+// Password is incorrect
+if (!isMatch) {
+  return res.status(401).json({
+    success: false,
+    message: 'Incorrect password. Please try again.',
+  });
+}
+
+
+// Check account status
+if (!user.isActive) {
+  return res.status(403).json({
+    success: false,
+    message: 'Account is deactivated. Please contact the administrator.',
+  });
+}
     const token = generateToken(user._id, user.role);
 
     // Issue secure HTTP-Only session cookie

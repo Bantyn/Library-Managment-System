@@ -18,6 +18,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     { to: '/fine-payments', label: 'Fine Payments', icon: 'bi-cash-coin' },
     { to: '/inventory/reports', label: 'Inventory Reports', icon: 'bi-file-earmark-spreadsheet' },
     { to: '/reports', label: 'Institutional Reports', icon: 'bi-file-earmark-bar-graph' },
+    { to: '/trash', label: 'Trash', icon: 'bi-trash3' },
     { to: '/settings', label: 'Settings', icon: 'bi-gear' },
   ];
 

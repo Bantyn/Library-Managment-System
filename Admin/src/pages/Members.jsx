@@ -4,6 +4,7 @@ import { memberService } from '../services/memberService';
 import Loading from '../components/common/Loading';
 import ErrorMessage from '../components/common/ErrorMessage';
 import EmptyState from '../components/common/EmptyState';
+import ConfirmModal from '../components/common/ConfirmModal';
 
 const Members = () => {
   const [members, setMembers] = useState([]);
@@ -14,6 +15,10 @@ const Members = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [actionInProgressId, setActionInProgressId] = useState(null);
+
+  // Soft delete state
+  const [memberToDelete, setMemberToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchMembers = useCallback(async () => {
     setLoading(true);
@@ -62,6 +67,27 @@ const Members = () => {
       );
     } finally {
       setActionInProgressId(null);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!memberToDelete) return;
+    setIsDeleting(true);
+    setError('');
+    try {
+      const res = await memberService.deleteMember(memberToDelete._id);
+      if (res.success) {
+        setSuccessMessage(`Member "${memberToDelete.name}" moved to Trash. You can restore them from the Trash page.`);
+        setMemberToDelete(null);
+        fetchMembers();
+      }
+    } catch (err) {
+      setError(
+        err.response?.data?.message || 'Failed to move member to trash. Check for active borrowed books.'
+      );
+      setMemberToDelete(null);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -216,6 +242,14 @@ const Members = () => {
                               <i className="bi bi-person-check"></i>
                             )}
                           </button>
+                          <button
+                            type="button"
+                            className="btn btn-outline-danger"
+                            title="Move to Trash"
+                            onClick={() => setMemberToDelete(member)}
+                          >
+                            <i className="bi bi-trash3"></i>
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -241,6 +275,18 @@ const Members = () => {
           )}
         </div>
       </div>
+
+      {/* Move to Trash Confirmation Modal */}
+      <ConfirmModal
+        isOpen={Boolean(memberToDelete)}
+        title="Move Member to Trash"
+        message={`Move "${memberToDelete?.name}" to trash? The member will be deactivated and hidden from the active list, but their 12-digit Library Card ID and borrowing history will be safely preserved.`}
+        confirmText="Move to Trash"
+        confirmVariant="warning"
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setMemberToDelete(null)}
+      />
     </div>
   );
 };

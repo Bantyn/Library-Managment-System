@@ -110,14 +110,14 @@ const Categories = () => {
     try {
       const res = await categoryService.deleteCategory(categoryToDelete._id);
       if (res.success) {
-        setSuccessMessage(`Category "${categoryToDelete.name}" deleted successfully.`);
+        setSuccessMessage(`Category "${categoryToDelete.name}" moved to Trash. You can restore it from the Trash page.`);
         setCategoryToDelete(null);
         fetchCategories();
       }
     } catch (err) {
       setError(
         err.response?.data?.message ||
-          'Cannot delete category. Ensure no books are currently assigned to it.'
+          'Cannot move category to trash. Ensure no active books are assigned to it.'
       );
       setCategoryToDelete(null);
     } finally {
@@ -317,13 +317,13 @@ const Categories = () => {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Move to Trash Confirmation Modal */}
       <ConfirmModal
         isOpen={Boolean(categoryToDelete)}
-        title="Delete Category"
-        message={`Are you sure you want to delete "${categoryToDelete?.name}"? Categories assigned to existing books cannot be deleted.`}
-        confirmText="Delete Category"
-        confirmVariant="danger"
+        title="Move Category to Trash"
+        message={`Move "${categoryToDelete?.name}" to trash? It will be hidden from active lists but can be restored from the Trash page.`}
+        confirmText="Move to Trash"
+        confirmVariant="warning"
         isLoading={isDeleting}
         onConfirm={handleConfirmDelete}
         onCancel={() => setCategoryToDelete(null)}

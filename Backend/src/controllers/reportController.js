@@ -194,7 +194,7 @@ const getOverdueReport = async (req, res, next) => {
 const getMembersReport = async (req, res, next) => {
   try {
     const { status } = req.query;
-    const query = { role: 'student' };
+    const query = { role: 'student', isDeleted: { $ne: true } };
     if (status !== undefined) query.isActive = status === 'true';
 
     const students = await User.find(query).sort({ createdAt: -1 });

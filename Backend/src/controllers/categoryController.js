@@ -124,7 +124,7 @@ const updateCategory = async (req, res, next) => {
   }
 };
 
-// @desc    Delete category
+// @desc    Soft delete category (Move to Trash)
 // @route   DELETE /api/categories/:id
 // @access  Private (Admin only)
 const deleteCategory = async (req, res, next) => {
@@ -137,22 +137,90 @@ const deleteCategory = async (req, res, next) => {
       });
     }
 
-    // Check if books are assigned to this category
-    const bookCount = await Book.countDocuments({ category: req.params.id });
+    if (category.isDeleted) {
+      return res.status(400).json({
+        success: false,
+        message: 'Category is already in trash.',
+      });
+    }
+
+    // Check if active (non-deleted) books are assigned to this category
+    const bookCount = await Book.countDocuments({
+      category: req.params.id,
+      isDeleted: { $ne: true },
+    });
     if (bookCount > 0) {
       return res.status(400).json({
         success: false,
-        message: `Cannot delete category. ${bookCount} book(s) are currently associated with it. Reassign or delete books first.`,
+        message: `Cannot move to trash. ${bookCount} active book(s) are assigned to this category. Reassign or remove books first.`,
       });
     }
 
     category.isDeleted = true;
     category.deletedAt = new Date();
+    category.deletedBy = req.user ? req.user._id : null;
     await category.save();
 
     res.status(200).json({
       success: true,
-      message: 'Category soft-deleted successfully',
+      message: 'Category moved to trash successfully.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Restore soft-deleted category from Trash
+// @route   PUT /api/categories/:id/restore
+// @access  Private (Admin only)
+const restoreCategory = async (req, res, next) => {
+  try {
+    const category = await Category.findById(req.params.id);
+    if (!category) {
+      return res.status(404).json({ success: false, message: 'Category not found' });
+    }
+    if (!category.isDeleted) {
+      return res.status(400).json({ success: false, message: 'Category is not in trash.' });
+    }
+
+    category.isDeleted = false;
+    category.deletedAt = null;
+    category.deletedBy = null;
+    await category.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Category restored successfully.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Permanently delete category from database
+// @route   DELETE /api/categories/:id/permanent
+// @access  Private (Admin only)
+const hardDeleteCategory = async (req, res, next) => {
+  try {
+    const category = await Category.findById(req.params.id);
+    if (!category) {
+      return res.status(404).json({ success: false, message: 'Category not found' });
+    }
+
+    // Block if any books (including deleted) reference this category
+    const bookCount = await Book.countDocuments({ category: req.params.id });
+    if (bookCount > 0) {
+      return res.status(409).json({
+        success: false,
+        message: `Cannot permanently delete. ${bookCount} book(s) (including trashed) reference this category. Historical data integrity must be preserved.`,
+      });
+    }
+
+    await Category.deleteOne({ _id: category._id });
+
+    res.status(200).json({
+      success: true,
+      message: 'Category permanently deleted from database.',
     });
   } catch (error) {
     next(error);
@@ -165,4 +233,6 @@ module.exports = {
   createCategory,
   updateCategory,
   deleteCategory,
+  restoreCategory,
+  hardDeleteCategory,
 };

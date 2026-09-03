@@ -31,8 +31,21 @@ export const bookService = {
     return response.data;
   },
 
+  // Soft delete — moves book to trash
   deleteBook: async (id) => {
     const response = await api.delete(`/books/${id}`);
+    return response.data;
+  },
+
+  // Restore from trash
+  restoreBook: async (id) => {
+    const response = await api.put(`/books/${id}/restore`);
+    return response.data;
+  },
+
+  // Permanent hard delete (requires backend dependency validation)
+  hardDeleteBook: async (id) => {
+    const response = await api.delete(`/books/${id}/permanent`);
     return response.data;
   },
 };

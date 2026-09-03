@@ -14,8 +14,9 @@ const getDashboardStats = async (req, res, next) => {
   try {
     const now = new Date();
 
-    // Aggregated book inventory counts
+    // Aggregated book inventory counts (active books only)
     const bookAggregate = await Book.aggregate([
+      { $match: { isDeleted: { $ne: true } } },
       {
         $group: {
           _id: null,
@@ -53,10 +54,10 @@ const getDashboardStats = async (req, res, next) => {
         status: { $in: ['issued', 'overdue'] },
         returnDate: null,
       }),
-      // Count registered students
-      User.countDocuments({ role: 'student' }),
-      // Count categories
-      Category.countDocuments(),
+      // Count registered students (active only)
+      User.countDocuments({ role: 'student', isDeleted: { $ne: true } }),
+      // Count categories (active only)
+      Category.countDocuments({ isDeleted: { $ne: true } }),
       // Count overdue issues
       Issue.countDocuments({
         dueDate: { $lt: now },
@@ -68,8 +69,8 @@ const getDashboardStats = async (req, res, next) => {
         .limit(5)
         .populate('book', 'title isbn author image')
         .populate('student', 'name studentId email'),
-      // 5 most recently added books
-      Book.find()
+      // 5 most recently added active books
+      Book.find({ isDeleted: { $ne: true } })
         .sort({ createdAt: -1 })
         .limit(5)
         .populate('category', 'name'),

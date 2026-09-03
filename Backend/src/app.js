@@ -14,6 +14,7 @@ const purchaseRoutes = require('./routes/purchaseRoutes');
 const fineRoutes = require('./routes/fineRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const trashRoutes = require('./routes/trashRoutes');
 
 // Import services & startup synchronizers
 const inventoryService = require('./services/inventoryService');
@@ -79,6 +80,7 @@ app.get('/api', (req, res) => {
       fines: '/api/fines',
       inventory: '/api/inventory',
       reports: '/api/reports',
+      trash: '/api/trash',
     },
   });
 });
@@ -95,6 +97,7 @@ app.use('/api/purchases', purchaseRoutes);
 app.use('/api/fines', fineRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/trash', trashRoutes);
 
 // Automatic physical inventory & library card synchronization on startup
 setTimeout(() => {

@@ -20,6 +20,24 @@ export const memberService = {
     return response.data;
   },
 
+  // Soft delete — moves member to trash
+  deleteMember: async (id) => {
+    const response = await api.delete(`/members/${id}`);
+    return response.data;
+  },
+
+  // Restore from trash
+  restoreMember: async (id) => {
+    const response = await api.put(`/members/${id}/restore`);
+    return response.data;
+  },
+
+  // Permanent hard delete
+  hardDeleteMember: async (id) => {
+    const response = await api.delete(`/members/${id}/permanent`);
+    return response.data;
+  },
+
   getMemberIssues: async (id) => {
     const response = await api.get(`/members/${id}/issues`);
     return response.data;

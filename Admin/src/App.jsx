@@ -24,6 +24,7 @@ import Inventory from './pages/Inventory';
 import InventoryDetails from './pages/InventoryDetails';
 import InventoryReports from './pages/InventoryReports';
 import Reports from './pages/Reports';
+import Trash from './pages/Trash';
 import Settings from './pages/Settings';
 
 function App() {
@@ -67,6 +68,9 @@ function App() {
 
           {/* AWD Institutional Reports (Phase 6) */}
           <Route path="/reports" element={<Reports />} />
+
+          {/* Soft-Deleted Records / Trash Management */}
+          <Route path="/trash" element={<Trash />} />
 
           {/* Settings */}
           <Route path="/settings" element={<Settings />} />

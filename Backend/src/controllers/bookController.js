@@ -2,6 +2,9 @@ const Book = require('../models/Book');
 const Category = require('../models/Category');
 const Issue = require('../models/Issue');
 const Inventory = require('../models/Inventory');
+const InventoryTransaction = require('../models/InventoryTransaction');
+const Purchase = require('../models/Purchase');
+const FinePayment = require('../models/FinePayment');
 const User = require('../models/User');
 const inventoryService = require('../services/inventoryService');
 
@@ -329,7 +332,7 @@ const updateBook = async (req, res, next) => {
   }
 };
 
-// @desc    Delete book
+// @desc    Soft delete book (Move to Trash)
 // @route   DELETE /api/books/:id
 // @access  Private (Admin only)
 const deleteBook = async (req, res, next) => {
@@ -342,7 +345,14 @@ const deleteBook = async (req, res, next) => {
       });
     }
 
-    // Check if book has active or overdue borrowings
+    if (book.isDeleted) {
+      return res.status(400).json({
+        success: false,
+        message: 'Book is already in trash.',
+      });
+    }
+
+    // Block if active borrowings exist
     const activeIssues = await Issue.countDocuments({
       book: req.params.id,
       status: { $in: ['issued', 'overdue'] },
@@ -351,17 +361,16 @@ const deleteBook = async (req, res, next) => {
     if (activeIssues > 0) {
       return res.status(400).json({
         success: false,
-        message: `Cannot delete book. ${activeIssues} copy/copies are currently issued. Return all issued copies before deleting.`,
+        message: `Cannot move to trash. ${activeIssues} copy/copies are currently issued. Return all issued copies first.`,
       });
     }
 
-    // Soft-delete book record preserving historical references
     book.isDeleted = true;
     book.deletedAt = new Date();
     book.deletedBy = req.user ? req.user._id : null;
     await book.save();
 
-    // Soft-delete physical inventory record as well
+    // Soft-delete the inventory record too
     await Inventory.findOneAndUpdate(
       { book: book._id },
       { isDeleted: true, deletedAt: new Date() }
@@ -369,7 +378,93 @@ const deleteBook = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: 'Book soft-deleted successfully. Historical loan and purchase records preserved.',
+      message: 'Book moved to trash successfully. Historical records preserved.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Restore soft-deleted book from Trash
+// @route   PUT /api/books/:id/restore
+// @access  Private (Admin only)
+const restoreBook = async (req, res, next) => {
+  try {
+    const book = await Book.findById(req.params.id);
+    if (!book) {
+      return res.status(404).json({ success: false, message: 'Book not found' });
+    }
+    if (!book.isDeleted) {
+      return res.status(400).json({ success: false, message: 'Book is not in trash.' });
+    }
+
+    book.isDeleted = false;
+    book.deletedAt = null;
+    book.deletedBy = null;
+    await book.save();
+
+    // Restore the linked inventory record
+    await Inventory.findOneAndUpdate(
+      { book: book._id },
+      { isDeleted: false, deletedAt: null }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Book restored successfully.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Permanently delete book from database
+// @route   DELETE /api/books/:id/permanent
+// @access  Private (Admin only)
+const hardDeleteBook = async (req, res, next) => {
+  try {
+    const book = await Book.findById(req.params.id);
+    if (!book) {
+      return res.status(404).json({ success: false, message: 'Book not found' });
+    }
+
+    // Dependency checks — block if historical references exist
+    const [activeIssues, historyIssues, purchases, operationalTxns, fines] = await Promise.all([
+      Issue.countDocuments({ book: book._id, status: { $in: ['issued', 'overdue'] } }),
+      Issue.countDocuments({ book: book._id }),
+      Purchase.countDocuments({ book: book._id }),
+      InventoryTransaction.countDocuments({
+        book: book._id,
+        $or: [
+          { type: { $in: ['ISSUE', 'RETURN', 'DAMAGE', 'LOST', 'RECOVERED', 'ADJUSTMENT'] } },
+          { referenceId: { $ne: null } },
+        ],
+      }),
+      FinePayment.countDocuments({ issue: { $in: await Issue.distinct('_id', { book: book._id }) } }),
+    ]);
+
+    if (activeIssues > 0) {
+      return res.status(409).json({
+        success: false,
+        message: `Cannot permanently delete. ${activeIssues} active issue(s) reference this book. Return all copies first.`,
+      });
+    }
+
+    if (historyIssues > 0 || purchases > 0 || operationalTxns > 0 || fines > 0) {
+      return res.status(409).json({
+        success: false,
+        message: `Cannot permanently delete. This book has historical records (${historyIssues} issue(s), ${purchases} purchase(s), ${operationalTxns} inventory transaction(s), ${fines} fine payment(s)). Restore or keep in trash to preserve data integrity.`,
+      });
+    }
+
+    // Safe to hard delete isolated record — clean up inventory & onboarding transactions
+    await InventoryTransaction.deleteMany({ book: book._id });
+    await Inventory.deleteOne({ book: book._id });
+    await Book.deleteOne({ _id: book._id });
+
+    res.status(200).json({
+      success: true,
+      message: 'Book permanently deleted from database.',
     });
   } catch (error) {
     next(error);
@@ -421,4 +516,6 @@ module.exports = {
   createBook,
   updateBook,
   deleteBook,
+  restoreBook,
+  hardDeleteBook,
 };

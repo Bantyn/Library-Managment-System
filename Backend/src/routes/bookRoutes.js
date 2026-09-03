@@ -7,6 +7,8 @@ const {
   createBook,
   updateBook,
   deleteBook,
+  restoreBook,
+  hardDeleteBook,
 } = require('../controllers/bookController');
 const { protect } = require('../middleware/authMiddleware');
 const { adminOnly } = require('../middleware/adminMiddleware');
@@ -20,5 +22,9 @@ router.get('/:id', getBookById);
 router.post('/', protect, adminOnly, upload.single('image'), createBook);
 router.put('/:id', protect, adminOnly, upload.single('image'), updateBook);
 router.delete('/:id', protect, adminOnly, deleteBook);
+
+// Trash operations (Admin only)
+router.put('/:id/restore', protect, adminOnly, restoreBook);
+router.delete('/:id/permanent', protect, adminOnly, hardDeleteBook);
 
 module.exports = router;

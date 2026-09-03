@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Issue = require('../models/Issue');
+const Purchase = require('../models/Purchase');
 
 // @desc    Get all members (students) with filter & search
 // @route   GET /api/members
@@ -8,7 +9,8 @@ const getMembers = async (req, res, next) => {
   try {
     const { search, isActive, libraryCardId } = req.query;
 
-    const query = { role: 'student' };
+    // Always exclude soft-deleted members from normal list
+    const query = { role: 'student', isDeleted: { $ne: true } };
 
     if (isActive !== undefined) {
       query.isActive = isActive === 'true';
@@ -134,7 +136,7 @@ const updateMember = async (req, res, next) => {
   }
 };
 
-// @desc    Delete/Deactivate member (Safe soft-delete preserving libraryCardId)
+// @desc    Soft delete member (Move to Trash)
 // @route   DELETE /api/members/:id
 // @access  Private (Admin only)
 const deleteMember = async (req, res, next) => {
@@ -147,7 +149,14 @@ const deleteMember = async (req, res, next) => {
       });
     }
 
-    // Check if member has active borrowing records
+    if (member.isDeleted) {
+      return res.status(400).json({
+        success: false,
+        message: 'Member is already in trash.',
+      });
+    }
+
+    // Block if active borrowings exist
     const activeBorrows = await Issue.countDocuments({
       student: member._id,
       status: { $in: ['issued', 'overdue'] },
@@ -156,19 +165,90 @@ const deleteMember = async (req, res, next) => {
     if (activeBorrows > 0) {
       return res.status(400).json({
         success: false,
-        message: `Cannot delete member with ${activeBorrows} active borrowed book(s). Please return all books or deactivate the member instead (isActive = false).`,
+        message: `Cannot move to trash. Member has ${activeBorrows} active borrowed book(s). Please return all books first.`,
       });
     }
 
-    // Soft delete preserving libraryCardId so it is never reused
+    // Soft delete — preserve libraryCardId so it is never reused
     member.isDeleted = true;
     member.isActive = false;
     member.deletedAt = new Date();
+    member.deletedBy = req.user ? req.user._id : null;
     await member.save();
 
     res.status(200).json({
       success: true,
-      message: 'Member account deactivated and soft-deleted. Historical records and Library Card ID preserved.',
+      message: 'Member moved to trash. Historical records and Library Card ID preserved.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Restore soft-deleted member from Trash
+// @route   PUT /api/members/:id/restore
+// @access  Private (Admin only)
+const restoreMember = async (req, res, next) => {
+  try {
+    const member = await User.findById(req.params.id);
+    if (!member) {
+      return res.status(404).json({ success: false, message: 'Member not found' });
+    }
+    if (!member.isDeleted) {
+      return res.status(400).json({ success: false, message: 'Member is not in trash.' });
+    }
+
+    member.isDeleted = false;
+    member.isActive = true;
+    member.deletedAt = null;
+    member.deletedBy = null;
+    await member.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Member restored successfully.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Permanently delete member from database
+// @route   DELETE /api/members/:id/permanent
+// @access  Private (Admin only)
+const hardDeleteMember = async (req, res, next) => {
+  try {
+    const member = await User.findById(req.params.id);
+    if (!member) {
+      return res.status(404).json({ success: false, message: 'Member not found' });
+    }
+
+    // Dependency checks
+    const [activeIssues, historyIssues, purchases] = await Promise.all([
+      Issue.countDocuments({ student: member._id, status: { $in: ['issued', 'overdue'] } }),
+      Issue.countDocuments({ student: member._id }),
+      Purchase.countDocuments({ student: member._id }),
+    ]);
+
+    if (activeIssues > 0) {
+      return res.status(409).json({
+        success: false,
+        message: `Cannot permanently delete. Member has ${activeIssues} active issue(s). Return all books first.`,
+      });
+    }
+
+    if (historyIssues > 0 || purchases > 0) {
+      return res.status(409).json({
+        success: false,
+        message: `Cannot permanently delete. Member has historical records (${historyIssues} issue(s), ${purchases} purchase(s)). Preserving data integrity.`,
+      });
+    }
+
+    await User.deleteOne({ _id: member._id });
+
+    res.status(200).json({
+      success: true,
+      message: 'Member permanently deleted from database.',
     });
   } catch (error) {
     next(error);
@@ -207,5 +287,7 @@ module.exports = {
   getMemberById,
   updateMember,
   deleteMember,
+  restoreMember,
+  hardDeleteMember,
   getMemberIssues,
 };

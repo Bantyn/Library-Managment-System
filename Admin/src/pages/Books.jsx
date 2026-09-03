@@ -92,13 +92,13 @@ const Books = () => {
     try {
       const res = await bookService.deleteBook(bookToDelete._id);
       if (res.success) {
-        setSuccessMessage(`"${bookToDelete.title}" was deleted successfully.`);
+        setSuccessMessage(`"${bookToDelete.title}" moved to Trash. You can restore it from the Trash page.`);
         setBookToDelete(null);
         fetchBooks();
       }
     } catch (err) {
       setError(
-        err.response?.data?.message || 'Failed to delete book. Please check for active borrowings.'
+        err.response?.data?.message || 'Failed to move book to trash. Please check for active borrowings.'
       );
       setBookToDelete(null);
     } finally {
@@ -239,13 +239,13 @@ const Books = () => {
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
+      {/* Move to Trash Confirmation Modal */}
       <ConfirmModal
         isOpen={Boolean(bookToDelete)}
-        title="Delete Book Record"
-        message={`Are you sure you want to delete "${bookToDelete?.title}"? This action cannot be undone.`}
-        confirmText="Delete Book"
-        confirmVariant="danger"
+        title="Move Book to Trash"
+        message={`Move "${bookToDelete?.title}" to trash? It will be removed from the active catalog but can be restored from the Trash page.`}
+        confirmText="Move to Trash"
+        confirmVariant="warning"
         isLoading={isDeleting}
         onConfirm={handleConfirmDelete}
         onCancel={() => setBookToDelete(null)}
