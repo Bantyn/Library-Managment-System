@@ -1,17 +1,21 @@
 const User = require('../models/User');
 const Issue = require('../models/Issue');
 
-// @desc    Get all members (students)
+// @desc    Get all members (students) with filter & search
 // @route   GET /api/members
 // @access  Private (Admin only)
 const getMembers = async (req, res, next) => {
   try {
-    const { search, isActive } = req.query;
+    const { search, isActive, libraryCardId } = req.query;
 
     const query = { role: 'student' };
 
     if (isActive !== undefined) {
       query.isActive = isActive === 'true';
+    }
+
+    if (libraryCardId && libraryCardId.trim()) {
+      query.libraryCardId = libraryCardId.trim();
     }
 
     if (search && search.trim()) {
@@ -20,6 +24,7 @@ const getMembers = async (req, res, next) => {
         { name: searchRegex },
         { email: searchRegex },
         { studentId: searchRegex },
+        { libraryCardId: searchRegex },
       ];
     }
 
@@ -67,7 +72,7 @@ const getMemberById = async (req, res, next) => {
   }
 };
 
-// @desc    Update member details or deactivate account
+// @desc    Update member details (Enforces libraryCardId immutability)
 // @route   PUT /api/members/:id
 // @access  Private (Admin only)
 const updateMember = async (req, res, next) => {
@@ -77,6 +82,18 @@ const updateMember = async (req, res, next) => {
       return res.status(404).json({
         success: false,
         message: 'Member not found',
+      });
+    }
+
+    // 1. Enforce strict immutability of libraryCardId
+    if (
+      req.body.libraryCardId &&
+      member.libraryCardId &&
+      req.body.libraryCardId !== member.libraryCardId
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'Library Card / Pass ID is permanent and immutable. It cannot be altered.',
       });
     }
 
@@ -117,7 +134,7 @@ const updateMember = async (req, res, next) => {
   }
 };
 
-// @desc    Delete member (Safe deletion)
+// @desc    Delete/Deactivate member (Safe soft-delete preserving libraryCardId)
 // @route   DELETE /api/members/:id
 // @access  Private (Admin only)
 const deleteMember = async (req, res, next) => {
@@ -143,11 +160,15 @@ const deleteMember = async (req, res, next) => {
       });
     }
 
-    await member.deleteOne();
+    // Soft delete preserving libraryCardId so it is never reused
+    member.isDeleted = true;
+    member.isActive = false;
+    member.deletedAt = new Date();
+    await member.save();
 
     res.status(200).json({
       success: true,
-      message: 'Member deleted successfully',
+      message: 'Member account deactivated and soft-deleted. Historical records and Library Card ID preserved.',
     });
   } catch (error) {
     next(error);

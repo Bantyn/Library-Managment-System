@@ -42,9 +42,27 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  libraryCardId: {
+    type: String,
+    trim: true,
+    unique: true,
+    sparse: true,
+    immutable: true,
+    match: [/^[0-9]{12}$/, 'Library Card ID must be exactly 12 decimal digits'],
+    index: true,
+  },
   isActive: {
     type: Boolean,
     default: true,
+  },
+  isDeleted: {
+    type: Boolean,
+    default: false,
+    index: true,
+  },
+  deletedAt: {
+    type: Date,
+    default: null,
   },
   createdAt: {
     type: Date,

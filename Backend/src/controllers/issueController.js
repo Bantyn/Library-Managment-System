@@ -24,12 +24,12 @@ const formatIssueWithOverdue = (issue) => {
 // @access  Private (Admin only)
 const issueBook = async (req, res, next) => {
   try {
-    const { bookId, studentId, dueDate } = req.body;
+    const { bookId, studentId, libraryCardId, dueDate } = req.body;
 
-    if (!bookId || !studentId) {
+    if (!bookId || (!studentId && !libraryCardId)) {
       return res.status(400).json({
         success: false,
-        message: 'Book ID and Student ID are required.',
+        message: 'Book ID and Student identifier (Student ID or Library Card ID) are required.',
       });
     }
 
@@ -42,13 +42,27 @@ const issueBook = async (req, res, next) => {
       });
     }
 
-    // 2. Check whether student exists
-    const student = await User.findById(studentId);
-    if (!student) {
-      return res.status(404).json({
-        success: false,
-        message: 'Student member not found.',
+    // 2. Resolve student via Library Card ID or MongoDB Student ID
+    let student;
+    if (libraryCardId && String(libraryCardId).trim()) {
+      student = await User.findOne({
+        libraryCardId: String(libraryCardId).trim(),
+        role: 'student',
       });
+      if (!student) {
+        return res.status(404).json({
+          success: false,
+          message: `No student member found with Library Card ID "${libraryCardId}".`,
+        });
+      }
+    } else {
+      student = await User.findById(studentId);
+      if (!student || student.role !== 'student') {
+        return res.status(404).json({
+          success: false,
+          message: 'Student member not found.',
+        });
+      }
     }
 
     // 3. Check whether student is active
@@ -70,7 +84,7 @@ const issueBook = async (req, res, next) => {
     // 5. Check whether student already has the SAME book issued
     const alreadyIssued = await Issue.findOne({
       book: bookId,
-      student: studentId,
+      student: student._id,
       status: { $in: ['issued', 'overdue'] },
       returnDate: null,
     });

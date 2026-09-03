@@ -1,6 +1,7 @@
 const Inventory = require('../models/Inventory');
 const InventoryTransaction = require('../models/InventoryTransaction');
 const Book = require('../models/Book');
+const User = require('../models/User');
 
 // Helper to convert array of objects into standard CSV text
 const toCSV = (headers, rows) => {
@@ -232,9 +233,56 @@ const getLostDamagedReport = async (req, res, next) => {
   }
 };
 
+// @desc    5. Member / Student Registry Report with Library Card ID
+// @route   GET /api/reports/members
+// @access  Private (Admin only)
+const getMembersReport = async (req, res, next) => {
+  try {
+    const students = await User.find({ role: 'student' }).sort({ createdAt: -1 });
+
+    const rows = students.map((s) => ({
+      libraryCardId: s.libraryCardId || 'N/A',
+      studentId: s.studentId || 'N/A',
+      name: s.name,
+      email: s.email,
+      phone: s.phone || '—',
+      status: s.isActive ? 'Active' : 'Deactivated',
+      registrationDate: s.createdAt ? new Date(s.createdAt).toISOString().split('T')[0] : '',
+    }));
+
+    if (req.query.format === 'csv') {
+      const headers = [
+        { label: 'Library Card ID', key: 'libraryCardId' },
+        { label: 'Student ID', key: 'studentId' },
+        { label: 'Student Name', key: 'name' },
+        { label: 'Email Address', key: 'email' },
+        { label: 'Phone', key: 'phone' },
+        { label: 'Account Status', key: 'status' },
+        { label: 'Registration Date', key: 'registrationDate' },
+      ];
+      const csv = toCSV(headers, rows);
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="members-report-${Date.now()}.csv"`
+      );
+      return res.status(200).send(csv);
+    }
+
+    res.status(200).json({
+      success: true,
+      count: rows.length,
+      data: rows,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getInventorySummaryReport,
   getInventoryMovementReport,
   getLowStockReport,
   getLostDamagedReport,
+  getMembersReport,
 };

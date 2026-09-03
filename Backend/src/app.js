@@ -15,8 +15,9 @@ const fineRoutes = require('./routes/fineRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 
-// Import services
+// Import services & startup synchronizers
 const inventoryService = require('./services/inventoryService');
+const syncExistingLibraryCards = require('./utils/syncLibraryCards');
 
 // Import error handlers
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
@@ -73,10 +74,13 @@ app.use('/api/fines', fineRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/reports', reportRoutes);
 
-// Automatic physical inventory synchronization on startup
+// Automatic physical inventory & library card synchronization on startup
 setTimeout(() => {
   inventoryService.syncAllExistingBooks().catch((e) => {
     console.warn('Initial inventory sync notice:', e.message);
+  });
+  syncExistingLibraryCards().catch((e) => {
+    console.warn('Initial library card sync notice:', e.message);
   });
 }, 1500);
 

@@ -138,12 +138,21 @@ const MemberDetails = () => {
                   {member.name ? member.name.charAt(0).toUpperCase() : 'S'}
                 </div>
                 <h5 className="fw-bold text-dark mb-1">{member.name}</h5>
-                <span className="badge bg-light text-dark border px-2 py-1">
-                  ID: {member.studentId || 'N/A'}
-                </span>
+                <div className="d-flex flex-wrap gap-1 justify-content-center mt-1">
+                  <span className="badge bg-light text-dark border px-2 py-1">
+                    Student ID: {member.studentId || 'N/A'}
+                  </span>
+                  <span className="badge bg-warning-subtle text-dark border border-warning px-2 py-1 font-monospace">
+                    Card ID: {member.libraryCardId || 'N/A'}
+                  </span>
+                </div>
               </div>
 
               <ul className="list-group list-group-flush border-top">
+                <li className="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                  <span className="text-muted small">12-Digit Library Card ID</span>
+                  <code className="text-dark fw-bold">{member.libraryCardId || '—'}</code>
+                </li>
                 <li className="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
                   <span className="text-muted small">Account Status</span>
                   <span

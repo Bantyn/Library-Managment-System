@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { dashboardService } from '../services/dashboardService';
+import { memberService } from '../services/memberService';
 import { formatDate, formatDateTime } from '../utils/formatDate';
 import Loading from '../components/common/Loading';
 import ErrorMessage from '../components/common/ErrorMessage';
@@ -9,6 +10,12 @@ const Dashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Quick Library Card Lookup state
+  const [quickLookupId, setQuickLookupId] = useState('');
+  const [lookupResult, setLookupResult] = useState(null);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupError, setLookupError] = useState('');
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -24,6 +31,28 @@ const Dashboard = () => {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleQuickLookup = async (e) => {
+    e.preventDefault();
+    const cleanId = quickLookupId.trim();
+    if (!cleanId) return;
+
+    setLookupLoading(true);
+    setLookupError('');
+    setLookupResult(null);
+    try {
+      const res = await memberService.getMembers({ libraryCardId: cleanId });
+      if (res.success && res.data?.length > 0) {
+        setLookupResult(res.data[0]);
+      } else {
+        setLookupError(`No member record found matching Library Card ID "${cleanId}".`);
+      }
+    } catch (err) {
+      setLookupError('Error looking up student record.');
+    } finally {
+      setLookupLoading(false);
     }
   };
 
@@ -162,6 +191,65 @@ const Dashboard = () => {
           </Link>
         </div>
       )}
+
+      {/* Quick Library Card / Pass Lookup Widget */}
+      <div className="card border shadow-sm mb-4">
+        <div className="card-body p-3">
+          <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+            <div className="d-flex align-items-center">
+              <div className="bg-primary-subtle text-primary rounded p-2 me-3 border border-primary-subtle">
+                <i className="bi bi-upc-scan fs-4"></i>
+              </div>
+              <div>
+                <h6 className="fw-bold text-dark mb-0">Quick Member / Library Card Lookup</h6>
+                <small className="text-muted">Instantly verify student identity, borrowing eligibility, and card status</small>
+              </div>
+            </div>
+
+            <form onSubmit={handleQuickLookup} className="d-flex gap-2 w-100" style={{ maxWidth: '420px' }}>
+              <input
+                type="text"
+                className="form-control form-control-sm font-monospace"
+                placeholder="12-digit Card ID (e.g. 000000000001)..."
+                maxLength="12"
+                value={quickLookupId}
+                onChange={(e) => setQuickLookupId(e.target.value.replace(/\D/g, ''))}
+              />
+              <button
+                type="submit"
+                className="btn btn-primary btn-sm text-dark fw-semibold text-nowrap d-flex align-items-center"
+                disabled={lookupLoading || !quickLookupId.trim()}
+              >
+                {lookupLoading ? <span className="spinner-border spinner-border-sm me-1" role="status"></span> : <i className="bi bi-search me-1"></i>}
+                Lookup
+              </button>
+            </form>
+          </div>
+
+          {lookupError && (
+            <div className="alert alert-danger mt-3 mb-0 py-2 px-3 small d-flex align-items-center">
+              <i className="bi bi-exclamation-circle-fill me-2"></i>
+              {lookupError}
+            </div>
+          )}
+
+          {lookupResult && (
+            <div className="alert alert-success mt-3 mb-0 py-2 px-3 small d-flex flex-wrap justify-content-between align-items-center gap-2">
+              <div>
+                <strong className="text-dark me-2">{lookupResult.name}</strong>
+                <span className="text-muted me-2">Card: <code>{lookupResult.libraryCardId}</code></span>
+                <span className="text-muted me-2">Student ID: <strong>{lookupResult.studentId || 'N/A'}</strong></span>
+                <span className={`badge ${lookupResult.isActive ? 'bg-success' : 'bg-danger'} me-2`}>
+                  {lookupResult.isActive ? 'Active' : 'Deactivated'}
+                </span>
+              </div>
+              <Link to={`/members/${lookupResult._id}`} className="btn btn-sm btn-outline-dark">
+                View Member Records →
+              </Link>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Section 1: Physical Inventory Holdings */}
       <div className="mb-4">

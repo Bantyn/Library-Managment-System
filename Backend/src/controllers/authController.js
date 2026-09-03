@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
+const generateLibraryCardId = require('../utils/generateLibraryCardId');
 
 // @desc    Register a new student member
 // @route   POST /api/auth/register
@@ -34,6 +35,9 @@ const register = async (req, res, next) => {
       });
     }
 
+    // Atomically generate unique 12-digit sequential Library Card / Pass ID
+    const libraryCardId = await generateLibraryCardId();
+
     // Enforce role: 'student' - public registration can NEVER create admin
     const user = new User({
       name,
@@ -41,6 +45,7 @@ const register = async (req, res, next) => {
       password,
       role: 'student',
       studentId,
+      libraryCardId,
       phone,
       isActive: true,
     });
@@ -59,6 +64,7 @@ const register = async (req, res, next) => {
         email: user.email,
         role: user.role,
         studentId: user.studentId,
+        libraryCardId: user.libraryCardId,
         phone: user.phone,
       },
     });
@@ -82,6 +88,7 @@ const login = async (req, res, next) => {
     }
 
     const user = await User.findOne({ email });
+
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -116,6 +123,7 @@ const login = async (req, res, next) => {
         email: user.email,
         role: user.role,
         studentId: user.studentId,
+        libraryCardId: user.libraryCardId,
         phone: user.phone,
       },
     });

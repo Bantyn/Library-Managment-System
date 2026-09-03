@@ -5,6 +5,7 @@ const {
   getInventoryMovementReport,
   getLowStockReport,
   getLostDamagedReport,
+  getMembersReport,
 } = require('../controllers/reportController');
 
 const { protect } = require('../middleware/authMiddleware');
@@ -18,5 +19,6 @@ router.get('/inventory-summary', getInventorySummaryReport);
 router.get('/inventory-movement', getInventoryMovementReport);
 router.get('/low-stock', getLowStockReport);
 router.get('/lost-damaged', getLostDamagedReport);
+router.get('/members', getMembersReport);
 
 module.exports = router;

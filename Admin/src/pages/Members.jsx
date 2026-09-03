@@ -105,7 +105,7 @@ const Members = () => {
                 <input
                   type="text"
                   className="form-control border-start-0"
-                  placeholder="Search members by name, Student ID, or email..."
+                  placeholder="Search members by name, Student ID, email, or 12-digit Library Card ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -149,20 +149,26 @@ const Members = () => {
             <Loading message="Loading member records..." />
           ) : members.length > 0 ? (
             <div className="table-responsive">
-              <table className="table table-hover align-middle mb-0 bg-white">
+              <table className="table table-hover align-middle mb-0 bg-white small">
                 <thead className="table-light">
                   <tr>
-                    <th scope="col" style={{ width: '15%' }}>Student ID</th>
-                    <th scope="col" style={{ width: '25%' }}>Student Name</th>
-                    <th scope="col" style={{ width: '25%' }}>Email Address</th>
-                    <th scope="col" style={{ width: '15%' }}>Phone</th>
-                    <th scope="col" className="text-center" style={{ width: '10%' }}>Status</th>
-                    <th scope="col" className="text-end" style={{ width: '10%' }}>Actions</th>
+                    <th scope="col" style={{ width: '15%' }}>Library Card ID</th>
+                    <th scope="col" style={{ width: '13%' }}>Student ID</th>
+                    <th scope="col" style={{ width: '22%' }}>Student Name</th>
+                    <th scope="col" style={{ width: '22%' }}>Email Address</th>
+                    <th scope="col" style={{ width: '12%' }}>Phone</th>
+                    <th scope="col" className="text-center" style={{ width: '8%' }}>Status</th>
+                    <th scope="col" className="text-end" style={{ width: '8%' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {members.map((member) => (
                     <tr key={member._id}>
+                      <td>
+                        <span className="badge bg-light text-dark border font-monospace px-2 py-1">
+                          {member.libraryCardId || '—'}
+                        </span>
+                      </td>
                       <td>
                         <code className="text-dark bg-light px-2 py-1 rounded fw-medium">
                           {member.studentId || 'N/A'}
