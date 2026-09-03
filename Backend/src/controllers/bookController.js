@@ -1,6 +1,8 @@
 const Book = require('../models/Book');
 const Category = require('../models/Category');
 const Issue = require('../models/Issue');
+const Inventory = require('../models/Inventory');
+const inventoryService = require('../services/inventoryService');
 
 // @desc    Get all books with search, filter, and pagination
 // @route   GET /api/books
@@ -178,6 +180,9 @@ const createBook = async (req, res, next) => {
       image: imagePath,
       purchasePrice: parsedPurchasePrice,
     });
+
+    // Automatically initialize inventory record & initial audit log
+    await inventoryService.getOrCreateInventory(book._id);
 
     const populatedBook = await Book.findById(book._id).populate(
       'category',

@@ -8,6 +8,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   const navItems = [
     { to: '/dashboard', label: 'Dashboard', icon: 'bi-speedometer2' },
     { to: '/books', label: 'Books', icon: 'bi-book' },
+    { to: '/inventory', label: 'Inventory', icon: 'bi-box-seam' },
     { to: '/categories', label: 'Categories', icon: 'bi-tags' },
     { to: '/members', label: 'Members', icon: 'bi-people' },
     { to: '/issues/issue-book', label: 'Issue Book', icon: 'bi-journal-plus' },
@@ -15,6 +16,7 @@ const Sidebar = ({ isOpen, onClose }) => {
     { to: '/issues/overdue', label: 'Overdue Books', icon: 'bi-exclamation-triangle' },
     { to: '/purchases', label: 'Purchases', icon: 'bi-bag-check' },
     { to: '/fine-payments', label: 'Fine Payments', icon: 'bi-cash-coin' },
+    { to: '/inventory/reports', label: 'Inventory Reports', icon: 'bi-file-earmark-spreadsheet' },
     { to: '/settings', label: 'Settings', icon: 'bi-gear' },
   ];
 

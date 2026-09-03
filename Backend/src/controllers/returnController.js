@@ -1,5 +1,6 @@
 const Issue = require('../models/Issue');
 const Book = require('../models/Book');
+const inventoryService = require('../services/inventoryService');
 
 // @desc    Process return of an issued book
 // @route   PUT /api/issues/:id/return
@@ -45,14 +46,8 @@ const returnBook = async (req, res, next) => {
     issue.fine = fine;
     await issue.save();
 
-    // 4. Increase availableCopies by 1 on Book model
-    const book = await Book.findById(issue.book);
-    if (book) {
-      if (book.availableCopies < book.totalCopies) {
-        book.availableCopies += 1;
-        await book.save();
-      }
-    }
+    // 4. Update inventory and record RETURN transaction atomically
+    await inventoryService.recordReturn(issue.book, issue._id, req.user._id);
 
     const populatedIssue = await Issue.findById(issue._id)
       .populate('book', 'title author isbn shelfLocation')

@@ -20,6 +20,9 @@ import IssueBook from './pages/IssueBook';
 import OverdueBooks from './pages/OverdueBooks';
 import Purchases from './pages/Purchases';
 import FinePayments from './pages/FinePayments';
+import Inventory from './pages/Inventory';
+import InventoryDetails from './pages/InventoryDetails';
+import InventoryReports from './pages/InventoryReports';
 import Settings from './pages/Settings';
 
 function App() {
@@ -55,6 +58,11 @@ function App() {
           {/* Financials & Razorpay (Phase 5) */}
           <Route path="/purchases" element={<Purchases />} />
           <Route path="/fine-payments" element={<FinePayments />} />
+
+          {/* Advanced Inventory Management (Phase 7) */}
+          <Route path="/inventory" element={<Inventory />} />
+          <Route path="/inventory/:bookId" element={<InventoryDetails />} />
+          <Route path="/inventory/reports" element={<InventoryReports />} />
 
           {/* Settings */}
           <Route path="/settings" element={<Settings />} />

@@ -1,6 +1,7 @@
 const Issue = require('../models/Issue');
 const Book = require('../models/Book');
 const User = require('../models/User');
+const inventoryService = require('../services/inventoryService');
 
 // Helper to check and mark overdue status on the fly
 const formatIssueWithOverdue = (issue) => {
@@ -106,9 +107,8 @@ const issueBook = async (req, res, next) => {
       fine: 0,
     });
 
-    // 7. Decrease availableCopies by 1
-    book.availableCopies -= 1;
-    await book.save();
+    // 7. Update inventory & record ISSUE transaction
+    await inventoryService.recordIssue(book._id, issue._id, req.user._id);
 
     // 8. Return populated success response
     const populatedIssue = await Issue.findById(issue._id)

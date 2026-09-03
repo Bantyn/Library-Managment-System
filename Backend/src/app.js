@@ -12,6 +12,11 @@ const returnRoutes = require('./routes/returnRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const purchaseRoutes = require('./routes/purchaseRoutes');
 const fineRoutes = require('./routes/fineRoutes');
+const inventoryRoutes = require('./routes/inventoryRoutes');
+const reportRoutes = require('./routes/reportRoutes');
+
+// Import services
+const inventoryService = require('./services/inventoryService');
 
 // Import error handlers
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
@@ -49,6 +54,8 @@ app.get('/api', (req, res) => {
       dashboard: '/api/dashboard',
       purchases: '/api/purchases',
       fines: '/api/fines',
+      inventory: '/api/inventory',
+      reports: '/api/reports',
     },
   });
 });
@@ -63,6 +70,15 @@ app.use('/api/returns', returnRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/purchases', purchaseRoutes);
 app.use('/api/fines', fineRoutes);
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api/reports', reportRoutes);
+
+// Automatic physical inventory synchronization on startup
+setTimeout(() => {
+  inventoryService.syncAllExistingBooks().catch((e) => {
+    console.warn('Initial inventory sync notice:', e.message);
+  });
+}, 1500);
 
 // 404 handler for undefined routes
 app.use(notFound);

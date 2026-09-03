@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { dashboardService } from '../services/dashboardService';
-import { formatDate } from '../utils/formatDate';
+import { formatDate, formatDateTime } from '../utils/formatDate';
 import Loading from '../components/common/Loading';
 import ErrorMessage from '../components/common/ErrorMessage';
 
@@ -41,46 +41,52 @@ const Dashboard = () => {
 
   const inventoryCards = [
     {
-      title: 'Total Books',
-      value: stats?.totalBooks || 0,
+      title: 'Total Titles',
+      value: stats?.totalTitles || 0,
       icon: 'bi-book',
       bgClass: 'bg-primary-subtle text-primary border-primary-subtle',
-      subtext: `${stats?.totalTitles || 0} unique titles`,
+      subtext: `${stats?.totalPhysicalCopies || stats?.totalBooks || 0} physical copies`,
+      link: '/books',
     },
     {
-      title: 'Available Books',
-      value: stats?.availableBooks || 0,
+      title: 'Available Copies',
+      value: stats?.totalAvailableCopies !== undefined ? stats.totalAvailableCopies : stats?.availableBooks || 0,
       icon: 'bi-check-circle',
       bgClass: 'bg-success-subtle text-success border-success-subtle',
       subtext: 'In circulation stock',
+      link: '/inventory?status=in_stock',
     },
     {
-      title: 'Issued Books',
-      value: stats?.issuedBooks || 0,
+      title: 'Issued (On Loan)',
+      value: stats?.totalIssuedCopies || stats?.issuedBooks || 0,
       icon: 'bi-journal-arrow-up',
       bgClass: 'bg-info-subtle text-info border-info-subtle',
-      subtext: 'Currently on loan',
+      subtext: 'Active circulation loans',
+      link: '/issues',
     },
     {
-      title: 'Total Students',
+      title: 'Damaged Copies',
+      value: stats?.totalDamagedCopies || 0,
+      icon: 'bi-tools',
+      bgClass: 'bg-warning-subtle text-warning-emphasis border-warning-subtle',
+      subtext: 'Under repair / discarded',
+      link: '/inventory?status=damaged',
+    },
+    {
+      title: 'Lost Copies',
+      value: stats?.totalLostCopies || 0,
+      icon: 'bi-question-diamond',
+      bgClass: 'bg-danger-subtle text-danger border-danger-subtle',
+      subtext: 'Reported lost copies',
+      link: '/inventory?status=lost',
+    },
+    {
+      title: 'Registered Students',
       value: stats?.totalStudents || 0,
       icon: 'bi-people',
       bgClass: 'bg-secondary-subtle text-secondary border-secondary-subtle',
-      subtext: 'Registered members',
-    },
-    {
-      title: 'Overdue Books',
-      value: stats?.overdueBooks || 0,
-      icon: 'bi-exclamation-triangle',
-      bgClass: 'bg-danger-subtle text-danger border-danger-subtle',
-      subtext: 'Pending late return',
-    },
-    {
-      title: 'Categories',
-      value: stats?.totalCategories || 0,
-      icon: 'bi-tags',
-      bgClass: 'bg-warning-subtle text-warning border-warning-subtle',
-      subtext: 'Subject classifications',
+      subtext: 'Active student accounts',
+      link: '/members',
     },
   ];
 
@@ -126,83 +132,159 @@ const Dashboard = () => {
         <div>
           <h3 className="fw-bold text-dark mb-1">Library Overview</h3>
           <p className="text-muted small mb-0">
-            Real-time circulation metrics, student sales, and fine collections
+            Real-time physical inventory, circulation metrics, student sales, and fine collections
           </p>
         </div>
         <div className="d-flex gap-2">
+          <Link to="/inventory" className="btn btn-outline-secondary btn-sm d-flex align-items-center">
+            <i className="bi bi-box-seam me-1"></i> Inventory Center
+          </Link>
           <Link to="/issues/issue-book" className="btn btn-primary btn-sm d-flex align-items-center">
             <i className="bi bi-journal-plus me-1"></i> Issue Book
-          </Link>
-          <Link to="/books/add" className="btn btn-outline-primary btn-sm d-flex align-items-center">
-            <i className="bi bi-plus-lg me-1"></i> Add Book
           </Link>
         </div>
       </div>
 
-      {/* Inventory KPI Cards Grid */}
-      <div className="row g-3 mb-4">
-        {inventoryCards.map((card, idx) => (
-          <div key={idx} className="col-12 col-sm-6 col-lg-4 col-xl-2">
-            <div className="card h-100 border shadow-sm">
-              <div className="card-body p-3">
-                <div className="d-flex justify-content-between align-items-center mb-2">
-                  <span className="text-muted small fw-medium">{card.title}</span>
-                  <div
-                    className={`rounded p-2 d-flex align-items-center justify-content-center border ${card.bgClass}`}
-                    style={{ width: '36px', height: '36px' }}
-                  >
-                    <i className={`bi ${card.icon} fs-5`}></i>
-                  </div>
-                </div>
-                <h3 className="fw-bold text-dark mb-1">
-                  {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
-                </h3>
-                <div className="text-muted small" style={{ fontSize: '11px' }}>
-                  {card.subtext}
-                </div>
-              </div>
+      {/* Low Stock Alert Banner */}
+      {stats?.lowStockBooks && stats.lowStockBooks.length > 0 && (
+        <div className="alert alert-warning border border-warning shadow-sm d-flex justify-content-between align-items-center mb-4" role="alert">
+          <div className="d-flex align-items-center">
+            <i className="bi bi-exclamation-triangle-fill fs-4 me-3 text-warning-emphasis"></i>
+            <div>
+              <strong className="d-block text-warning-emphasis">Low Stock Replenishment Alert!</strong>
+              <small className="text-dark">
+                {stats.lowStockBooks.length} book(s) have available copies at or below their alert threshold (e.g. {stats.lowStockBooks.map(b => b.book?.title).filter(Boolean).slice(0, 3).join(', ')}).
+              </small>
             </div>
           </div>
-        ))}
-      </div>
+          <Link to="/inventory?status=low_stock" className="btn btn-warning btn-sm text-dark fw-semibold ms-3 text-nowrap">
+            View Low Stock Books
+          </Link>
+        </div>
+      )}
 
-      {/* Financial & Razorpay KPI Cards (Phase 5) */}
-      <div className="row g-3 mb-4">
-        {financialCards.map((card, idx) => (
-          <div key={idx} className="col-12 col-sm-6 col-lg-3">
-            <Link to={card.link} className="text-decoration-none">
-              <div className="card h-100 border shadow-sm hover-elevate">
-                <div className="card-body p-3">
-                  <div className="d-flex justify-content-between align-items-center mb-2">
-                    <span className="text-muted small fw-medium">{card.title}</span>
-                    <div
-                      className={`rounded p-2 d-flex align-items-center justify-content-center border ${card.bgClass}`}
-                      style={{ width: '36px', height: '36px' }}
-                    >
-                      <i className={`bi ${card.icon} fs-5`}></i>
+      {/* Section 1: Physical Inventory Holdings */}
+      <div className="mb-4">
+        <h6 className="fw-bold text-dark text-uppercase small tracking-wide mb-3">
+          <i className="bi bi-layers me-2 text-primary"></i>
+          Physical Holdings & Circulation
+        </h6>
+        <div className="row g-3">
+          {inventoryCards.map((card, idx) => (
+            <div key={idx} className="col-12 col-sm-6 col-xl-2">
+              <Link to={card.link} className="text-decoration-none">
+                <div className="card h-100 border shadow-sm transition-hover">
+                  <div className="card-body p-3">
+                    <div className="d-flex justify-content-between align-items-start mb-2">
+                      <span className="text-muted small fw-medium text-truncate">{card.title}</span>
+                      <div className={`rounded p-1 ${card.bgClass}`} style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <i className={`bi ${card.icon}`}></i>
+                      </div>
                     </div>
-                  </div>
-                  <h3 className="fw-bold text-dark mb-1">{card.value}</h3>
-                  <div className="d-flex justify-content-between align-items-center text-muted small" style={{ fontSize: '11px' }}>
-                    <span>{card.subtext}</span>
-                    <span className="text-primary fw-medium">View →</span>
+                    <h4 className="fw-bold text-dark mb-1">{card.value}</h4>
+                    <span className="text-muted" style={{ fontSize: '11px' }}>{card.subtext}</span>
                   </div>
                 </div>
-              </div>
-            </Link>
-          </div>
-        ))}
+              </Link>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Dashboard Tables Section */}
+      {/* Section 2: Financial KPIs */}
+      <div className="mb-4">
+        <h6 className="fw-bold text-dark text-uppercase small tracking-wide mb-3">
+          <i className="bi bi-wallet2 me-2 text-success"></i>
+          Financial Operations & Revenue
+        </h6>
+        <div className="row g-3">
+          {financialCards.map((card, idx) => (
+            <div key={idx} className="col-12 col-sm-6 col-lg-3">
+              <Link to={card.link} className="text-decoration-none">
+                <div className="card h-100 border shadow-sm transition-hover">
+                  <div className="card-body p-3">
+                    <div className="d-flex justify-content-between align-items-start mb-2">
+                      <span className="text-muted small fw-medium text-truncate">{card.title}</span>
+                      <div className={`rounded p-1 ${card.bgClass}`} style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <i className={`bi ${card.icon}`}></i>
+                      </div>
+                    </div>
+                    <h4 className="fw-bold text-dark mb-1">{card.value}</h4>
+                    <span className="text-muted" style={{ fontSize: '11px' }}>{card.subtext}</span>
+                  </div>
+                </div>
+              </Link>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Section 3: Recent Inventory Activity Audit Log & Recent Issues */}
       <div className="row g-4 mb-4">
+        {/* Recent Inventory Movement Activity */}
+        <div className="col-12 col-lg-6">
+          <div className="card border shadow-sm h-100">
+            <div className="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+              <h6 className="mb-0 fw-semibold text-dark d-flex align-items-center">
+                <i className="bi bi-clock-history me-2 text-primary"></i>
+                Recent Inventory Activity
+              </h6>
+              <Link to="/inventory" className="btn btn-sm btn-link text-decoration-none p-0">
+                View All
+              </Link>
+            </div>
+            <div className="card-body p-0">
+              {stats?.recentInventoryActivity && stats.recentInventoryActivity.length > 0 ? (
+                <div className="table-responsive">
+                  <table className="table table-hover align-middle mb-0 small">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Type</th>
+                        <th>Book Title</th>
+                        <th className="text-center">Qty</th>
+                        <th>Reason</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {stats.recentInventoryActivity.map((act) => (
+                        <tr key={act._id}>
+                          <td>
+                            <span className="badge bg-light text-dark border">
+                              {act.type}
+                            </span>
+                          </td>
+                          <td className="fw-medium text-dark text-truncate" style={{ maxWidth: '160px' }}>
+                            {act.book?.title || 'Unknown Title'}
+                          </td>
+                          <td className="text-center fw-bold">
+                            {act.type === 'STOCK_IN' || act.type === 'RETURN' || act.type === 'RECOVERED' ? (
+                              <span className="text-success">+{act.quantity}</span>
+                            ) : (
+                              <span className="text-danger">-{act.quantity}</span>
+                            )}
+                          </td>
+                          <td className="text-muted text-truncate" style={{ maxWidth: '160px' }}>
+                            {act.reason}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="p-4 text-center text-muted small">No recent stock movements recorded.</div>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Recent Issues */}
         <div className="col-12 col-lg-6">
           <div className="card border shadow-sm h-100">
             <div className="card-header bg-white py-3 d-flex justify-content-between align-items-center">
               <h6 className="mb-0 fw-semibold text-dark d-flex align-items-center">
-                <i className="bi bi-journal-text me-2 text-primary"></i>
-                Recent Issues
+                <i className="bi bi-journal-text me-2 text-info"></i>
+                Recent Circulation Issues
               </h6>
               <Link to="/issues" className="btn btn-sm btn-link text-decoration-none p-0">
                 View All
@@ -224,7 +306,7 @@ const Dashboard = () => {
                       {stats.recentIssues.map((issue) => (
                         <tr key={issue._id}>
                           <td>
-                            <div className="fw-medium text-truncate" style={{ maxWidth: '160px' }}>
+                            <div className="fw-medium text-truncate" style={{ maxWidth: '140px' }}>
                               {issue.book?.title || 'Unknown Title'}
                             </div>
                             <span className="text-muted" style={{ fontSize: '11px' }}>
@@ -232,10 +314,7 @@ const Dashboard = () => {
                             </span>
                           </td>
                           <td>
-                            <div>{issue.student?.name || 'Unknown Student'}</div>
-                            <span className="text-muted" style={{ fontSize: '11px' }}>
-                              {issue.student?.studentId}
-                            </span>
+                            <div className="text-truncate" style={{ maxWidth: '120px' }}>{issue.student?.name || 'Unknown'}</div>
                           </td>
                           <td>{formatDate(issue.dueDate)}</td>
                           <td className="text-end">
@@ -262,76 +341,17 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-
-        {/* Recently Added Books */}
-        <div className="col-12 col-lg-6">
-          <div className="card border shadow-sm h-100">
-            <div className="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-              <h6 className="mb-0 fw-semibold text-dark d-flex align-items-center">
-                <i className="bi bi-book me-2 text-success"></i>
-                Recently Added Books
-              </h6>
-              <Link to="/books" className="btn btn-sm btn-link text-decoration-none p-0">
-                View All
-              </Link>
-            </div>
-            <div className="card-body p-0">
-              {stats?.recentBooks?.length > 0 ? (
-                <div className="table-responsive">
-                  <table className="table table-hover align-middle mb-0 small">
-                    <thead className="table-light">
-                      <tr>
-                        <th>Title</th>
-                        <th>Author</th>
-                        <th>Category</th>
-                        <th className="text-center">Stock</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {stats.recentBooks.map((book) => (
-                        <tr key={book._id}>
-                          <td>
-                            <div className="fw-medium text-truncate" style={{ maxWidth: '180px' }}>
-                              {book.title}
-                            </div>
-                          </td>
-                          <td className="text-secondary">{book.author}</td>
-                          <td>
-                            <span className="badge bg-light text-dark border">
-                              {book.category?.name || 'General'}
-                            </span>
-                          </td>
-                          <td className="text-center">
-                            <span
-                              className={`badge ${
-                                book.availableCopies > 0 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'
-                              }`}
-                            >
-                              {book.availableCopies} / {book.totalCopies}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="p-4 text-center text-muted small">No books in catalog yet.</div>
-              )}
-            </div>
-          </div>
-        </div>
       </div>
 
-      {/* Overdue Alerts Section */}
+      {/* Section 4: Overdue Loans Table */}
       <div className="card border shadow-sm">
         <div className="card-header bg-white py-3 d-flex justify-content-between align-items-center">
           <h6 className="mb-0 fw-semibold text-danger d-flex align-items-center">
             <i className="bi bi-exclamation-octagon me-2"></i>
-            Overdue Loans Requiring Attention
+            Active Overdue Loans Requiring Action
           </h6>
-          <Link to="/issues/overdue" className="btn btn-sm btn-outline-danger">
-            View All Overdue
+          <Link to="/issues" className="btn btn-sm btn-outline-danger">
+            Manage Loans
           </Link>
         </div>
         <div className="card-body p-0">

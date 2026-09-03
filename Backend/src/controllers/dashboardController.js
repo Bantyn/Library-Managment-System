@@ -4,6 +4,8 @@ const Category = require('../models/Category');
 const Issue = require('../models/Issue');
 const Purchase = require('../models/Purchase');
 const FinePayment = require('../models/FinePayment');
+const Inventory = require('../models/Inventory');
+const InventoryTransaction = require('../models/InventoryTransaction');
 
 // @desc    Get system dashboard statistics & summary lists
 // @route   GET /api/dashboard
@@ -41,6 +43,10 @@ const getDashboardStats = async (req, res, next) => {
       purchaseAgg,
       fineCollectedAgg,
       totalFinesAgg,
+      invAgg,
+      lowStockBooks,
+      outOfStockBooksCount,
+      recentInventoryActivity,
     ] = await Promise.all([
       // Count currently issued copies
       Issue.countDocuments({
@@ -78,7 +84,7 @@ const getDashboardStats = async (req, res, next) => {
         .populate('student', 'name studentId phone'),
       // Purchases aggregate
       Purchase.aggregate([
-        { $match: { status: 'paid' } },
+        { $match: { status: { $in: ['paid', 'processing', 'fulfilled'] } } },
         {
           $group: {
             _id: null,
@@ -106,6 +112,36 @@ const getDashboardStats = async (req, res, next) => {
           },
         },
       ]),
+      // Physical Inventory breakdown aggregate
+      Inventory.aggregate([
+        { $match: { isDeleted: false } },
+        {
+          $group: {
+            _id: null,
+            totalPhysicalCopies: { $sum: '$totalCopies' },
+            availableCopies: { $sum: '$availableCopies' },
+            issuedCopies: { $sum: '$issuedCopies' },
+            damagedCopies: { $sum: '$damagedCopies' },
+            lostCopies: { $sum: '$lostCopies' },
+          },
+        },
+      ]),
+      // Low stock books (< lowStockThreshold and > 0)
+      Inventory.find({
+        isDeleted: false,
+        availableCopies: { $gt: 0 },
+        $expr: { $lte: ['$availableCopies', '$lowStockThreshold'] },
+      })
+        .populate('book', 'title isbn author shelfLocation image')
+        .limit(6),
+      // Out of stock books count
+      Inventory.countDocuments({ isDeleted: false, availableCopies: 0 }),
+      // 5 most recent inventory activity transactions
+      InventoryTransaction.find()
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .populate('book', 'title isbn author image')
+        .populate('performedBy', 'name email'),
     ]);
 
     const totalPurchases = purchaseAgg.length > 0 ? purchaseAgg[0].count : 0;
@@ -113,6 +149,13 @@ const getDashboardStats = async (req, res, next) => {
     const fineCollected = fineCollectedAgg.length > 0 ? fineCollectedAgg[0].totalCollected : 0;
     const totalFinesGenerated = totalFinesAgg.length > 0 ? totalFinesAgg[0].totalFineGenerated : 0;
     const outstandingFines = Math.max(0, totalFinesGenerated - fineCollected);
+
+    const inv = invAgg.length > 0 ? invAgg[0] : {};
+    const totalPhysicalCopies = inv.totalPhysicalCopies || totalBooks;
+    const totalAvailableCopies = inv.availableCopies !== undefined ? inv.availableCopies : availableBooks;
+    const totalIssuedCopies = inv.issuedCopies || issuedBooks;
+    const totalDamagedCopies = inv.damagedCopies || 0;
+    const totalLostCopies = inv.lostCopies || 0;
 
     res.status(200).json({
       success: true,
@@ -131,6 +174,16 @@ const getDashboardStats = async (req, res, next) => {
         purchaseRevenue,
         outstandingFines,
         fineCollected,
+        // Inventory Phase 7 Metrics
+        totalPhysicalCopies,
+        totalAvailableCopies,
+        totalIssuedCopies,
+        totalDamagedCopies,
+        totalLostCopies,
+        lowStockCount: lowStockBooks.length,
+        outOfStockCount: outOfStockBooksCount,
+        lowStockBooks,
+        recentInventoryActivity,
       },
     });
   } catch (error) {

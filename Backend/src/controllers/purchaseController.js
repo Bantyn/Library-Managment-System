@@ -1,6 +1,7 @@
 const Purchase = require('../models/Purchase');
 const Book = require('../models/Book');
 const razorpayService = require('../services/razorpayService');
+const inventoryService = require('../services/inventoryService');
 
 // @desc    Create Razorpay Order for Book Purchase
 // @route   POST /api/purchases/create-order
@@ -103,7 +104,7 @@ const verifyPurchase = async (req, res, next) => {
       });
     }
 
-    if (purchase.status === 'paid') {
+    if (purchase.status === 'paid' || purchase.status === 'fulfilled') {
       return res.status(200).json({
         success: true,
         message: 'Payment has already been verified and recorded.',
@@ -229,10 +230,64 @@ const getPurchaseById = async (req, res, next) => {
   }
 };
 
+// @desc    Update Purchase Status / Physical Fulfillment (Admin only)
+// @route   PUT /api/purchases/:id/status
+// @access  Private (Admin)
+const updatePurchaseStatus = async (req, res, next) => {
+  try {
+    const { status } = req.body;
+    const purchase = await Purchase.findById(req.params.id);
+
+    if (!purchase) {
+      return res.status(404).json({
+        success: false,
+        message: 'Purchase record not found.',
+      });
+    }
+
+    if (status === 'fulfilled') {
+      const result = await inventoryService.fulfillPurchase(purchase._id, req.user._id);
+      return res.status(200).json({
+        success: true,
+        message: 'Purchase order successfully marked as fulfilled and stock dispatched.',
+        data: result.purchase,
+      });
+    }
+
+    if (status === 'processing') {
+      purchase.status = 'processing';
+      await purchase.save();
+      return res.status(200).json({
+        success: true,
+        message: 'Purchase order status updated to processing.',
+        data: purchase,
+      });
+    }
+
+    if (status === 'cancelled') {
+      purchase.status = 'cancelled';
+      await purchase.save();
+      return res.status(200).json({
+        success: true,
+        message: 'Purchase order status updated to cancelled.',
+        data: purchase,
+      });
+    }
+
+    res.status(400).json({
+      success: false,
+      message: 'Invalid status transition requested.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createPurchaseOrder,
   verifyPurchase,
   getMyPurchases,
   getAllPurchases,
   getPurchaseById,
+  updatePurchaseStatus,
 };

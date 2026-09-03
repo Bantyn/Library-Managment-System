@@ -143,20 +143,20 @@ const BookDetails = () => {
     if (book.availableCopies === 0) {
       return (
         <span className="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 fs-6">
-          <i className="bi bi-x-circle me-1"></i> Currently Unavailable (0 copies)
+          <i className="bi bi-x-circle-fill me-1"></i> Out of Stock
         </span>
       );
     }
     if (book.availableCopies <= 2) {
       return (
         <span className="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 fs-6">
-          <i className="bi bi-exclamation-triangle me-1"></i> Limited Availability ({book.availableCopies} available)
+          <i className="bi bi-exclamation-triangle-fill me-1"></i> Low Stock (Only {book.availableCopies} left)
         </span>
       );
     }
     return (
       <span className="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 fs-6">
-        <i className="bi bi-check-circle me-1"></i> Available for Loan ({book.availableCopies} copies)
+        <i className="bi bi-check-circle-fill me-1"></i> Available for Loan ({book.availableCopies} copies)
       </span>
     );
   };
@@ -355,17 +355,24 @@ const BookDetails = () => {
                 </h6>
               </div>
               <div className="card-body p-4 small text-secondary">
-                <p>
-                  To borrow this book on a 14-day campus loan:
-                </p>
-                <div className="bg-light p-3 rounded mb-3">
-                  <div className="mb-1"><strong>Title:</strong> {book.title}</div>
-                  <div className="mb-1"><strong>Shelf:</strong> {book.shelfLocation || 'General Stacks'}</div>
-                  <div><strong>ISBN:</strong> {book.isbn}</div>
-                </div>
-                <p className="mb-0">
-                  Present your <strong>Student ID</strong> at the library circulation desk.
-                </p>
+                {book.availableCopies === 0 ? (
+                  <div className="alert alert-danger mb-0 py-2">
+                    <i className="bi bi-x-circle me-1"></i>
+                    <strong>Currently Out of Stock for Loan:</strong> All copies are currently issued or undergoing catalog review. Check back later or ask the desk librarian to be notified upon return.
+                  </div>
+                ) : (
+                  <>
+                    <p className="mb-2">To borrow this book on a 14-day campus loan:</p>
+                    <div className="bg-light p-3 rounded mb-3">
+                      <div className="mb-1"><strong>Title:</strong> {book.title}</div>
+                      <div className="mb-1"><strong>Shelf:</strong> {book.shelfLocation || 'General Stacks'}</div>
+                      <div><strong>ISBN:</strong> {book.isbn}</div>
+                    </div>
+                    <p className="mb-0">
+                      Present your <strong>Student ID</strong> at the library circulation desk.
+                    </p>
+                  </>
+                )}
               </div>
             </div>
           </div>

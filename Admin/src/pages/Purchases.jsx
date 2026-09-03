@@ -9,7 +9,9 @@ const Purchases = () => {
   const [purchases, setPurchases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
+  const [fulfillingId, setFulfillingId] = useState(null);
 
   const fetchPurchases = useCallback(async () => {
     setLoading(true);
@@ -32,18 +34,54 @@ const Purchases = () => {
     fetchPurchases();
   }, [fetchPurchases]);
 
+  const handleUpdateStatus = async (purchaseId, newStatus) => {
+    if (newStatus === 'fulfilled') {
+      const confirmed = window.confirm(
+        'Confirm physical fulfillment? This will permanently deduct 1 copy from library inventory stock and record a STOCK_OUT audit transaction.'
+      );
+      if (!confirmed) return;
+    }
+
+    setFulfillingId(purchaseId);
+    setError('');
+    setSuccessMsg('');
+    try {
+      const res = await purchaseService.updateStatus(purchaseId, newStatus);
+      if (res.success) {
+        setSuccessMsg(res.message || `Order successfully updated to ${newStatus}.`);
+        fetchPurchases();
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update order fulfillment status.');
+    } finally {
+      setFulfillingId(null);
+    }
+  };
+
   const getStatusBadge = (status) => {
     switch (status) {
+      case 'fulfilled':
+        return (
+          <span className="badge bg-success text-white px-2 py-1">
+            <i className="bi bi-box-seam me-1"></i> Fulfilled
+          </span>
+        );
+      case 'processing':
+        return (
+          <span className="badge bg-info-subtle text-info border border-info-subtle px-2 py-1">
+            <i className="bi bi-gear-wide me-1"></i> Processing
+          </span>
+        );
       case 'paid':
         return (
           <span className="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
-            <i className="bi bi-check-circle-fill me-1"></i> Paid
+            <i className="bi bi-check-circle-fill me-1"></i> Paid (Pending Dispatch)
           </span>
         );
       case 'created':
         return (
           <span className="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1">
-            <i className="bi bi-hourglass-split me-1"></i> Created (Pending)
+            <i className="bi bi-hourglass-split me-1"></i> Payment Pending
           </span>
         );
       case 'failed':
@@ -52,6 +90,8 @@ const Purchases = () => {
             <i className="bi bi-x-circle-fill me-1"></i> Failed
           </span>
         );
+      case 'cancelled':
+        return <span className="badge bg-secondary">Cancelled</span>;
       default:
         return <span className="badge bg-secondary">{status}</span>;
     }
@@ -63,7 +103,7 @@ const Purchases = () => {
   };
 
   const totalRevenue = purchases
-    .filter((p) => p.status === 'paid')
+    .filter((p) => p.status === 'paid' || p.status === 'processing' || p.status === 'fulfilled')
     .reduce((sum, p) => sum + (p.amount || 0), 0);
 
   return (
@@ -71,35 +111,43 @@ const Purchases = () => {
       {/* Header */}
       <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-4 gap-2">
         <div>
-          <h3 className="fw-bold text-dark mb-1">Book Purchases Ledger</h3>
+          <h3 className="fw-bold text-dark mb-1">Book Purchases & Physical Fulfillment</h3>
           <p className="text-muted small mb-0">
-            Student book sales processed via Razorpay payment gateway
+            Student book sales processed via Razorpay with physical copy dispatch and inventory stock tracking
           </p>
         </div>
         <div className="d-flex align-items-center gap-2">
           <div className="bg-white border rounded px-3 py-2 shadow-sm small">
-            <span className="text-muted me-2">Paid Sales:</span>
+            <span className="text-muted me-2">Completed Sales Revenue:</span>
             <strong className="text-success fs-6">₹{totalRevenue}</strong>
           </div>
         </div>
       </div>
 
+      {successMsg && (
+        <div className="alert alert-success alert-dismissible fade show d-flex align-items-center mb-4" role="alert">
+          <i className="bi bi-check-circle-fill me-2 fs-5"></i>
+          <div>{successMsg}</div>
+          <button type="button" className="btn-close" onClick={() => setSuccessMsg('')}></button>
+        </div>
+      )}
+
       {/* Filter Tabs Card */}
       <div className="card border shadow-sm mb-4">
         <div className="card-body p-3 d-flex flex-wrap gap-2 justify-content-between align-items-center">
-          <div className="d-flex gap-2">
-            {['all', 'paid', 'created', 'failed'].map((status) => (
+          <div className="d-flex flex-wrap gap-2">
+            {['all', 'paid', 'processing', 'fulfilled', 'created', 'failed'].map((status) => (
               <button
                 key={status}
                 type="button"
                 className={`btn btn-sm text-capitalize ${
                   selectedStatus === status
-                    ? 'btn-primary'
+                    ? 'btn-primary text-dark fw-semibold'
                     : 'btn-outline-secondary'
                 }`}
                 onClick={() => setSelectedStatus(status)}
               >
-                {status === 'all' ? 'All Transactions' : status}
+                {status === 'all' ? 'All Orders' : status}
               </button>
             ))}
           </div>
@@ -118,22 +166,23 @@ const Purchases = () => {
             <Loading message="Fetching student book purchase records..." />
           ) : purchases.length > 0 ? (
             <div className="table-responsive">
-              <table className="table table-hover align-middle mb-0 bg-white">
+              <table className="table table-hover align-middle mb-0 bg-white small">
                 <thead className="table-light">
                   <tr>
                     <th scope="col" style={{ width: '4%' }}>#</th>
                     <th scope="col" style={{ width: '6%' }}>Cover</th>
-                    <th scope="col" style={{ width: '24%' }}>Book Purchased</th>
-                    <th scope="col" style={{ width: '22%' }}>Student Member</th>
-                    <th scope="col" style={{ width: '10%' }}>Amount</th>
-                    <th scope="col" style={{ width: '12%' }}>Date</th>
-                    <th scope="col" style={{ width: '10%' }}>Status</th>
-                    <th scope="col" style={{ width: '12%' }}>Payment ID</th>
+                    <th scope="col" style={{ width: '22%' }}>Book Purchased</th>
+                    <th scope="col" style={{ width: '18%' }}>Student Member</th>
+                    <th scope="col" style={{ width: '9%' }}>Amount</th>
+                    <th scope="col" style={{ width: '11%' }}>Date</th>
+                    <th scope="col" style={{ width: '12%' }}>Status</th>
+                    <th scope="col" style={{ width: '18%' }} className="text-end">Fulfillment Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {purchases.map((purchase, index) => {
                     const coverUrl = getImageUrl(purchase.book?.image);
+                    const isOperating = fulfillingId === purchase._id;
 
                     return (
                       <tr key={purchase._id}>
@@ -156,29 +205,69 @@ const Purchases = () => {
                           </div>
                         </td>
                         <td>
-                          <div className="fw-semibold text-dark">
+                          <div className="fw-semibold text-dark text-truncate" style={{ maxWidth: '200px' }}>
                             {purchase.book?.title || 'Unknown Title'}
                           </div>
-                          <span className="text-muted small">
-                            ISBN: {purchase.book?.isbn || '—'} • Author: {purchase.book?.author || '—'}
+                          <span className="text-muted" style={{ fontSize: '11px' }}>
+                            ISBN: <code>{purchase.book?.isbn || '—'}</code>
                           </span>
                         </td>
                         <td>
                           <div className="fw-medium text-dark">{purchase.student?.name}</div>
-                          <span className="text-muted small">
+                          <span className="text-muted" style={{ fontSize: '11px' }}>
                             ID: {purchase.student?.studentId} • {purchase.student?.email}
                           </span>
                         </td>
-                        <td className="fw-bold text-dark">₹{purchase.amount}</td>
-                        <td className="small text-secondary">
+                        <td className="fw-bold text-dark fs-6">₹{purchase.amount}</td>
+                        <td className="text-secondary" style={{ fontSize: '11px' }}>
                           {formatDateTime(purchase.purchaseDate || purchase.createdAt)}
                         </td>
                         <td>{getStatusBadge(purchase.status)}</td>
-                        <td>
-                          {purchase.razorpayPaymentId ? (
-                            <code className="text-primary small">{purchase.razorpayPaymentId}</code>
-                          ) : (
-                            <span className="text-muted small">—</span>
+                        <td className="text-end">
+                          {purchase.status === 'paid' && (
+                            <div className="d-flex justify-content-end gap-1">
+                              <button
+                                type="button"
+                                className="btn btn-outline-info btn-sm"
+                                onClick={() => handleUpdateStatus(purchase._id, 'processing')}
+                                disabled={isOperating}
+                              >
+                                Process
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-success btn-sm text-white fw-semibold"
+                                onClick={() => handleUpdateStatus(purchase._id, 'fulfilled')}
+                                disabled={isOperating}
+                              >
+                                {isOperating ? 'Fulfilling...' : 'Fulfill & Dispatch'}
+                              </button>
+                            </div>
+                          )}
+
+                          {purchase.status === 'processing' && (
+                            <button
+                              type="button"
+                              className="btn btn-success btn-sm text-white fw-semibold"
+                              onClick={() => handleUpdateStatus(purchase._id, 'fulfilled')}
+                              disabled={isOperating}
+                            >
+                              {isOperating ? 'Fulfilling...' : 'Fulfill & Dispatch'}
+                            </button>
+                          )}
+
+                          {purchase.status === 'fulfilled' && (
+                            <span className="text-success small fw-medium">
+                              <i className="bi bi-check-all me-1 fs-6"></i> Dispatched & Stock Deducted
+                            </span>
+                          )}
+
+                          {purchase.status === 'created' && (
+                            <span className="text-muted small">Awaiting Student Payment</span>
+                          )}
+
+                          {purchase.status === 'failed' && (
+                            <span className="text-danger small">Payment Failed</span>
                           )}
                         </td>
                       </tr>

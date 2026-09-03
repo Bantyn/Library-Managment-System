@@ -14,4 +14,9 @@ export const purchaseService = {
     const response = await api.get(`/purchases/${id}`);
     return response.data;
   },
+
+  updateStatus: async (id, status) => {
+    const response = await api.put(`/purchases/${id}/status`, { status });
+    return response.data;
+  },
 };

@@ -31,12 +31,21 @@ const purchaseSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['created', 'paid', 'failed', 'cancelled'],
+      enum: ['created', 'paid', 'processing', 'fulfilled', 'failed', 'cancelled'],
       default: 'created',
     },
     purchaseDate: {
       type: Date,
       default: Date.now,
+    },
+    fulfilledAt: {
+      type: Date,
+      default: null,
+    },
+    fulfilledBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
     },
   },
   {
