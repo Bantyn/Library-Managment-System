@@ -19,7 +19,8 @@ const toCSV = (headers, rows) => {
       })
       .join(',')
   );
-  return [headerLine, ...rowLines].join('\r\n');
+  // Prepend UTF-8 BOM (\uFEFF) so Microsoft Excel opens Unicode and INR currency characters cleanly
+  return '\uFEFF' + [headerLine, ...rowLines].join('\r\n');
 };
 
 // =========================================================================

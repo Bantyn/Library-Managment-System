@@ -4,7 +4,7 @@ const User = require('../models/User');
 const protect = async (req, res, next) => {
   let token;
 
-  // Extract token from Bearer Authorization header OR HTTP-Only cookie
+  // Extract token from Bearer Authorization header, HTTP-Only cookie, OR query parameter (for direct file downloads)
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith('Bearer')
@@ -12,6 +12,8 @@ const protect = async (req, res, next) => {
     token = req.headers.authorization.split(' ')[1];
   } else if (req.cookies && req.cookies.token) {
     token = req.cookies.token;
+  } else if (req.query && req.query.token) {
+    token = req.query.token;
   }
 
   if (!token) {

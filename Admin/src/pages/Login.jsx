@@ -7,7 +7,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { login, isAuthenticated } = useAuth();
 
-  const [email, setEmail] = useState('admin@library.com');
+  const [email, setEmail] = useState('admin@gmail.com');
   const [password, setPassword] = useState('admin123');
   const [captchaId, setCaptchaId] = useState('');
   const [captchaSvg, setCaptchaSvg] = useState('');
@@ -207,7 +207,7 @@ const Login = () => {
               AWD Protected Session
             </div>
             <div>
-              Email: <code>admin@library.com</code> • Password: <code>admin123</code>
+              Email: <code>admin@gmail.com</code> • Password: <code>admin123</code>
             </div>
           </div>
         </div>
