@@ -244,15 +244,21 @@ const Home = () => {
                 </p>
               </div>
 
-              {/* Master Search Bar */}
-              <div className="ps-hero-search mb-4 mx-auto mx-lg-0" style={{ maxWidth: '580px' }}>
+              {/* Master Search Bar — high z-index so dropdown always floats above sibling buttons */}
+              <div
+                className="ps-hero-search mb-4 mx-auto mx-lg-0"
+                style={{ maxWidth: '580px', position: 'relative', zIndex: 100 }}
+              >
                 <MasterSearchBar
                   size="lg"
                   placeholder="Search books by title, author, or ISBN..."
                 />
               </div>
 
-              <div className="ps-hero-cta d-flex flex-wrap justify-content-center justify-content-lg-start gap-3">
+              <div
+                className="ps-hero-cta d-flex flex-wrap justify-content-center justify-content-lg-start gap-3"
+                style={{ position: 'relative', zIndex: 1 }}
+              >
                 <Link
                   to="/books"
                   className="btn btn-primary btn-lg text-dark fw-semibold px-4 d-inline-flex align-items-center shadow-sm ps-cta-btn-primary"
