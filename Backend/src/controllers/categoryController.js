@@ -6,7 +6,7 @@ const Book = require('../models/Book');
 // @access  Public
 const getCategories = async (req, res, next) => {
   try {
-    const categories = await Category.find().sort({ name: 1 });
+    const categories = await Category.find({ isDeleted: { $ne: true } }).sort({ name: 1 });
     res.status(200).json({
       success: true,
       count: categories.length,
@@ -146,11 +146,13 @@ const deleteCategory = async (req, res, next) => {
       });
     }
 
-    await category.deleteOne();
+    category.isDeleted = true;
+    category.deletedAt = new Date();
+    await category.save();
 
     res.status(200).json({
       success: true,
-      message: 'Category deleted successfully',
+      message: 'Category soft-deleted successfully',
     });
   } catch (error) {
     next(error);

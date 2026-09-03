@@ -11,7 +11,7 @@ const getBooks = async (req, res, next) => {
   try {
     const { search, category, page = 1, limit = 10 } = req.query;
 
-    const query = {};
+    const query = { isDeleted: { $ne: true } };
 
     // Basic search across title, author, and ISBN
     if (search && search.trim()) {
@@ -354,11 +354,21 @@ const deleteBook = async (req, res, next) => {
       });
     }
 
-    await book.deleteOne();
+    // Soft-delete book record preserving historical references
+    book.isDeleted = true;
+    book.deletedAt = new Date();
+    book.deletedBy = req.user ? req.user._id : null;
+    await book.save();
+
+    // Soft-delete physical inventory record as well
+    await Inventory.findOneAndUpdate(
+      { book: book._id },
+      { isDeleted: true, deletedAt: new Date() }
+    );
 
     res.status(200).json({
       success: true,
-      message: 'Book deleted successfully',
+      message: 'Book soft-deleted successfully. Historical loan and purchase records preserved.',
     });
   } catch (error) {
     next(error);

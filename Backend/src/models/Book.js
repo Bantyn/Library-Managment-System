@@ -67,6 +67,20 @@ const bookSchema = new mongoose.Schema(
       default: 0,
       min: [0, 'Purchase price cannot be negative'],
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
   },
   {
     timestamps: true,

@@ -23,6 +23,7 @@ import FinePayments from './pages/FinePayments';
 import Inventory from './pages/Inventory';
 import InventoryDetails from './pages/InventoryDetails';
 import InventoryReports from './pages/InventoryReports';
+import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 
 function App() {
@@ -63,6 +64,9 @@ function App() {
           <Route path="/inventory" element={<Inventory />} />
           <Route path="/inventory/:bookId" element={<InventoryDetails />} />
           <Route path="/inventory/reports" element={<InventoryReports />} />
+
+          {/* AWD Institutional Reports (Phase 6) */}
+          <Route path="/reports" element={<Reports />} />
 
           {/* Settings */}
           <Route path="/settings" element={<Settings />} />

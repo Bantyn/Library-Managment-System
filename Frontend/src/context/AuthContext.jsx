@@ -10,18 +10,13 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const restoreSession = async () => {
-      const storedToken = localStorage.getItem('student_token');
-      if (!storedToken) {
-        setLoading(false);
-        return;
-      }
-
       try {
         const data = await authService.getMe();
         if (data.success && data.user) {
           if (data.user.role === 'student') {
             setUser(data.user);
-            setToken(storedToken);
+            const activeToken = localStorage.getItem('student_token') || 'cookie_session';
+            setToken(activeToken);
           } else {
             logout();
           }
@@ -29,7 +24,6 @@ export const AuthProvider = ({ children }) => {
           logout();
         }
       } catch (err) {
-        console.error('Student session restore failed:', err.message);
         logout();
       } finally {
         setLoading(false);
@@ -39,8 +33,8 @@ export const AuthProvider = ({ children }) => {
     restoreSession();
   }, []);
 
-  const login = async (email, password) => {
-    const data = await authService.login(email, password);
+  const login = async (email, password, captchaId, captchaAnswer) => {
+    const data = await authService.login(email, password, captchaId, captchaAnswer);
 
     if (!data.success) {
       throw new Error(data.message || 'Login failed.');
@@ -78,7 +72,12 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } catch (err) {
+      // Ignore network errors on logout
+    }
     localStorage.removeItem('student_token');
     localStorage.removeItem('student_user');
     setToken(null);

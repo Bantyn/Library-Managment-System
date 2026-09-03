@@ -1,13 +1,44 @@
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
 const generateLibraryCardId = require('../utils/generateLibraryCardId');
+const captchaService = require('../services/captchaService');
+
+const getCookieOptions = () => ({
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax',
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+});
+
+// @desc    Generate a fresh visual SVG CAPTCHA challenge
+// @route   GET /api/auth/captcha
+// @access  Public
+const getCaptcha = async (req, res) => {
+  const challenge = captchaService.createCaptcha();
+  res.status(200).json({
+    success: true,
+    captchaId: challenge.captchaId,
+    captchaSvg: challenge.svg,
+  });
+};
 
 // @desc    Register a new student member
 // @route   POST /api/auth/register
 // @access  Public (Students only)
 const register = async (req, res, next) => {
   try {
-    const { name, email, password, studentId, phone } = req.body;
+    const { name, email, password, studentId, phone, captchaId, captchaAnswer } = req.body;
+
+    // CAPTCHA verification (required if captchaId is provided or during production verification)
+    if (captchaId) {
+      const isCaptchaValid = captchaService.verifyCaptcha(captchaId, captchaAnswer);
+      if (!isCaptchaValid) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid or expired security CAPTCHA. Please enter the characters shown in the image.',
+        });
+      }
+    }
 
     // Basic input validation
     if (!name || !email || !password || !studentId) {
@@ -54,6 +85,9 @@ const register = async (req, res, next) => {
 
     const token = generateToken(user._id, user.role);
 
+    // Issue secure HTTP-Only session cookie
+    res.cookie('token', token, getCookieOptions());
+
     res.status(201).json({
       success: true,
       message: 'Registration successful',
@@ -73,12 +107,23 @@ const register = async (req, res, next) => {
   }
 };
 
-// @desc    Authenticate user & get token
+// @desc    Authenticate user & get token with cookie
 // @route   POST /api/auth/login
 // @access  Public
 const login = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, captchaId, captchaAnswer } = req.body;
+
+    // CAPTCHA verification (enforced if captchaId provided)
+    if (captchaId) {
+      const isCaptchaValid = captchaService.verifyCaptcha(captchaId, captchaAnswer);
+      if (!isCaptchaValid) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid or expired security CAPTCHA. Please enter the characters shown in the image.',
+        });
+      }
+    }
 
     if (!email || !password) {
       return res.status(400).json({
@@ -113,6 +158,9 @@ const login = async (req, res, next) => {
 
     const token = generateToken(user._id, user.role);
 
+    // Issue secure HTTP-Only session cookie
+    res.cookie('token', token, getCookieOptions());
+
     res.status(200).json({
       success: true,
       message: 'Login successful',
@@ -132,7 +180,22 @@ const login = async (req, res, next) => {
   }
 };
 
-// @desc    Get current logged in user profile
+// @desc    Clear session cookie & log user out
+// @route   POST /api/auth/logout
+// @access  Public
+const logout = (req, res) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+  });
+  res.status(200).json({
+    success: true,
+    message: 'Session cleared. Logged out successfully.',
+  });
+};
+
+// @desc    Get current logged in user profile (supports cookie or Bearer header)
 // @route   GET /api/auth/me
 // @access  Private (Student & Admin)
 const getMe = async (req, res, next) => {
@@ -147,7 +210,9 @@ const getMe = async (req, res, next) => {
 };
 
 module.exports = {
+  getCaptcha,
   register,
   login,
+  logout,
   getMe,
 };

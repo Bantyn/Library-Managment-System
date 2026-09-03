@@ -18,14 +18,35 @@ const reportRoutes = require('./routes/reportRoutes');
 // Import services & startup synchronizers
 const inventoryService = require('./services/inventoryService');
 const syncExistingLibraryCards = require('./utils/syncLibraryCards');
+const cookieParser = require('cookie-parser');
 
 // Import error handlers
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
 
+// Allowed frontend origins for HTTP-Only cookie credentials
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+];
+
 // Global Middlewares
-app.use(cors());
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(null, true); // Permissive for local dev & testing
+      }
+    },
+    credentials: true,
+  })
+);
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

@@ -8,30 +8,24 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token') || null);
   const [loading, setLoading] = useState(true);
 
-  // Restore authenticated session on mount
+  // Restore authenticated session on mount (via cookie or token)
   useEffect(() => {
     const restoreSession = async () => {
-      const storedToken = localStorage.getItem('token');
-      if (!storedToken) {
-        setLoading(false);
-        return;
-      }
-
       try {
         const data = await authService.getMe();
         if (data.success && data.user) {
           if (data.user.role === 'admin') {
             setUser(data.user);
-            setToken(storedToken);
+            const activeToken = localStorage.getItem('token') || 'cookie_session';
+            setToken(activeToken);
           } else {
-            // Not an admin account
             logout();
           }
         } else {
           logout();
         }
       } catch (err) {
-        console.error('Session restore failed:', err.message);
+        // Fallback check
         logout();
       } finally {
         setLoading(false);
@@ -41,8 +35,8 @@ export const AuthProvider = ({ children }) => {
     restoreSession();
   }, []);
 
-  const login = async (email, password) => {
-    const data = await authService.login(email, password);
+  const login = async (email, password, captchaId, captchaAnswer) => {
+    const data = await authService.login(email, password, captchaId, captchaAnswer);
 
     if (!data.success) {
       throw new Error(data.message || 'Login failed.');
@@ -61,7 +55,12 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } catch (err) {
+      // Ignore network errors on logout
+    }
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setToken(null);

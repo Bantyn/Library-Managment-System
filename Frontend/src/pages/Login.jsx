@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { authService } from '../services/authService';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -8,8 +9,33 @@ const Login = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [captchaId, setCaptchaId] = useState('');
+  const [captchaSvg, setCaptchaSvg] = useState('');
+  const [captchaAnswer, setCaptchaAnswer] = useState('');
+  const [loadingCaptcha, setLoadingCaptcha] = useState(false);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  const loadCaptcha = async () => {
+    setLoadingCaptcha(true);
+    try {
+      const res = await authService.getCaptcha();
+      if (res.success) {
+        setCaptchaId(res.captchaId);
+        setCaptchaSvg(res.captchaSvg);
+        setCaptchaAnswer('');
+      }
+    } catch (err) {
+      console.error('Failed to load CAPTCHA:', err.message);
+    } finally {
+      setLoadingCaptcha(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCaptcha();
+  }, []);
 
   if (isAuthenticated) {
     return <Navigate to="/my-books" replace />;
@@ -24,14 +50,20 @@ const Login = () => {
       return;
     }
 
+    if (captchaId && !captchaAnswer.trim()) {
+      setError('Please enter the security verification code.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      await login(email.trim(), password);
+      await login(email.trim(), password, captchaId, captchaAnswer.trim());
       navigate('/my-books');
     } catch (err) {
       const msg =
         err.response?.data?.message || err.message || 'Login failed. Please check credentials.';
       setError(msg);
+      loadCaptcha();
     } finally {
       setIsSubmitting(false);
     }
@@ -90,7 +122,7 @@ const Login = () => {
                     </div>
                   </div>
 
-                  <div className="mb-4">
+                  <div className="mb-3">
                     <label htmlFor="studentPassword" className="form-label small fw-medium text-secondary">
                       Account Password
                     </label>
@@ -111,9 +143,51 @@ const Login = () => {
                     </div>
                   </div>
 
+                  {/* Visual SVG CAPTCHA Verification */}
+                  {captchaSvg && (
+                    <div className="mb-4 p-3 bg-light rounded border">
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <label className="form-label small fw-medium text-secondary mb-0">
+                          Security Verification
+                        </label>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-link text-decoration-none p-0"
+                          onClick={loadCaptcha}
+                          disabled={loadingCaptcha}
+                          title="Generate new challenge"
+                        >
+                          <i className="bi bi-arrow-clockwise me-1"></i> Refresh
+                        </button>
+                      </div>
+
+                      <div className="d-flex align-items-center gap-2 mb-2">
+                        <div
+                          dangerouslySetInnerHTML={{ __html: captchaSvg }}
+                          className="d-flex align-items-center"
+                          style={{ minHeight: '50px' }}
+                        />
+                        <input
+                          type="text"
+                          className="form-control font-monospace text-uppercase text-center fw-bold"
+                          placeholder="Code"
+                          maxLength="6"
+                          value={captchaAnswer}
+                          onChange={(e) => setCaptchaAnswer(e.target.value)}
+                          required
+                          disabled={isSubmitting}
+                          style={{ letterSpacing: '2px', height: '50px' }}
+                        />
+                      </div>
+                      <small className="text-muted" style={{ fontSize: '11px' }}>
+                        Enter the characters shown above.
+                      </small>
+                    </div>
+                  )}
+
                   <button
                     type="submit"
-                    className="btn btn-primary w-100 py-2 fw-medium d-flex align-items-center justify-content-center"
+                    className="btn btn-primary w-100 py-2 fw-medium d-flex align-items-center justify-content-center text-dark fw-semibold"
                     disabled={isSubmitting}
                   >
                     {isSubmitting && (
