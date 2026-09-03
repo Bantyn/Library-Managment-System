@@ -1,0 +1,392 @@
+/* ==========================================================================
+   Library Management System — Admin Portal Theme & Design Tokens
+   Primary Theme: #FFE082 (Warm Amber Gold)
+   Centralized Control: Margins, Paddings, Shadows, and Border Radii
+   Architecture: Pure Bootstrap 5 (STRICTLY ZERO TAILWIND)
+   ========================================================================== */
+
+:root {
+  /* ========================================================================
+     1. COLOR DESIGN TOKENS
+     ======================================================================== */
+  --theme-primary: #FFE082;
+  --theme-primary-hover: #ffd54f;
+  --theme-primary-active: #ffca28;
+  --theme-primary-dark: #8d5b00;
+  --theme-primary-subtle: #fff8e1;
+  --theme-primary-border: #ffe082;
+  --theme-bg-body: #fbfbf9;
+  --theme-text-body: #212529;
+
+  /* Bootstrap 5 Color Mapping */
+  --bs-primary: #FFE082;
+  --bs-primary-rgb: 255, 224, 130;
+  --bs-primary-text-emphasis: #8d5b00;
+  --bs-primary-bg-subtle: #fff8e1;
+  --bs-primary-border-subtle: #ffe082;
+  --bs-link-color: #8d5b00;
+  --bs-link-hover-color: #6f4700;
+  --bs-focus-ring-color: rgba(255, 224, 130, 0.45);
+
+  /* ========================================================================
+     2. CENTRALIZED SPACING & PADDING / MARGIN TOKENS
+     ======================================================================== */
+  --space-0: 0px;
+  --space-1: 0.25rem;  /* 4px  */
+  --space-2: 0.5rem;   /* 8px  */
+  --space-3: 1rem;     /* 16px */
+  --space-4: 1.5rem;   /* 24px */
+  --space-5: 2rem;     /* 32px */
+  --space-6: 3rem;     /* 48px */
+
+  /* Component Spacing Tokens */
+  --card-padding: var(--space-4);
+  --card-header-padding-y: var(--space-3);
+  --card-header-padding-x: var(--space-4);
+  --btn-padding-y: var(--space-2);
+  --btn-padding-x: var(--space-3);
+  --btn-padding-y-sm: var(--space-1);
+  --btn-padding-x-sm: var(--space-2);
+  --btn-padding-y-lg: var(--space-3);
+  --btn-padding-x-lg: var(--space-4);
+  --input-padding-y: var(--space-2);
+  --input-padding-x: var(--space-3);
+  --modal-padding: var(--space-4);
+  --table-cell-padding-y: 0.75rem;
+  --table-cell-padding-x: 0.75rem;
+  --admin-sidebar-width: 250px;
+
+  /* ========================================================================
+     3. CENTRALIZED BORDER RADIUS TOKENS
+     ======================================================================== */
+  --radius-none: 0px;
+  --radius-xs: 0.25rem;   /* 4px  - badges, small tags */
+  --radius-sm: 0.375rem;  /* 6px  - small buttons, subtle elements */
+  --radius-md: 0.5rem;    /* 8px  - default cards, inputs, standard buttons */
+  --radius-lg: 0.75rem;   /* 12px - modals, elevated cards */
+  --radius-xl: 1rem;      /* 16px - prominent hero surfaces */
+  --radius-pill: 50rem;   /* pill pills & full circular avatars */
+
+  /* Component Border Radius Overrides */
+  --card-border-radius: var(--radius-md);
+  --btn-border-radius: var(--radius-sm);
+  --input-border-radius: var(--radius-sm);
+  --modal-border-radius: var(--radius-lg);
+  --badge-border-radius: var(--radius-xs);
+
+  /* Bootstrap 5 Radius Mapping */
+  --bs-border-radius: var(--radius-md);
+  --bs-border-radius-sm: var(--radius-sm);
+  --bs-border-radius-lg: var(--radius-lg);
+  --bs-border-radius-xl: var(--radius-xl);
+  --bs-border-radius-pill: var(--radius-pill);
+
+  /* ========================================================================
+     4. CENTRALIZED SHADOW / ELEVATION TOKENS
+     ======================================================================== */
+  --shadow-none: none;
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.08), 0 4px 6px rgba(0, 0, 0, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  --shadow-primary: 0 4px 12px rgba(255, 224, 130, 0.45);
+  --shadow-hover: 0 8px 16px rgba(141, 91, 0, 0.1);
+
+  /* Bootstrap 5 Shadow Mapping */
+  --bs-box-shadow-sm: var(--shadow-sm);
+  --bs-box-shadow: var(--shadow-md);
+  --bs-box-shadow-lg: var(--shadow-lg);
+  --bs-box-shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.075);
+
+  /* Typography */
+  --admin-font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ==========================================================================
+   GLOBAL BASE STYLES
+   ========================================================================== */
+body {
+  font-family: var(--admin-font-family);
+  background-color: var(--theme-bg-body);
+  color: var(--theme-text-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   COMPONENT STYLES CONTROLLED BY TOKENS
+   ========================================================================== */
+
+/* Cards */
+.card {
+  border-radius: var(--card-border-radius) !important;
+  border-color: #eee9da;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.card-header {
+  padding: var(--card-header-padding-y) var(--card-header-padding-x) !important;
+  border-top-left-radius: calc(var(--card-border-radius) - 1px) !important;
+  border-top-right-radius: calc(var(--card-border-radius) - 1px) !important;
+  border-bottom: 1px solid #f0ecdf;
+}
+
+.card-body {
+  padding: var(--card-padding) !important;
+}
+
+/* Modals */
+.modal-content {
+  border-radius: var(--modal-border-radius) !important;
+  box-shadow: var(--shadow-lg) !important;
+  border: 1px solid #eee9da;
+}
+
+.modal-header {
+  padding: var(--card-header-padding-y) var(--card-header-padding-x) !important;
+  border-bottom: 1px solid #f0ecdf;
+}
+
+.modal-body {
+  padding: var(--modal-padding) !important;
+}
+
+.modal-footer {
+  padding: var(--card-header-padding-y) var(--card-header-padding-x) !important;
+  border-top: 1px solid #f0ecdf;
+}
+
+/* Forms & Inputs */
+.form-control,
+.form-select {
+  border-radius: var(--input-border-radius) !important;
+  padding: var(--input-padding-y) var(--input-padding-x);
+  border-color: #dee2e6;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #ffd54f !important;
+  box-shadow: 0 0 0 0.25rem rgba(255, 224, 130, 0.45) !important;
+}
+
+/* Buttons */
+.btn {
+  border-radius: var(--btn-border-radius) !important;
+  padding: var(--btn-padding-y) var(--btn-padding-x);
+  transition: all 0.15s ease-in-out;
+}
+
+.btn-sm {
+  border-radius: var(--radius-xs) !important;
+  padding: var(--btn-padding-y-sm) var(--btn-padding-x-sm) !important;
+  font-size: 0.8125rem;
+}
+
+.btn-lg {
+  border-radius: var(--radius-md) !important;
+  padding: var(--btn-padding-y-lg) var(--btn-padding-x-lg) !important;
+}
+
+/* Primary Button */
+.btn-primary {
+  --bs-btn-color: #212529;
+  --bs-btn-bg: #FFE082;
+  --bs-btn-border-color: #ffd54f;
+  --bs-btn-hover-color: #000000;
+  --bs-btn-hover-bg: #ffd54f;
+  --bs-btn-hover-border-color: #fbc02d;
+  --bs-btn-focus-shadow-rgb: 255, 224, 130;
+  --bs-btn-active-color: #000000;
+  --bs-btn-active-bg: #ffca28;
+  --bs-btn-active-border-color: #fbc02d;
+  --bs-btn-disabled-color: #6c757d;
+  --bs-btn-disabled-bg: #ffe082;
+  --bs-btn-disabled-border-color: #ffe082;
+  font-weight: 500;
+}
+
+/* Outline Primary Button */
+.btn-outline-primary {
+  --bs-btn-color: #8d5b00;
+  --bs-btn-border-color: #e0a800;
+  --bs-btn-hover-color: #212529;
+  --bs-btn-hover-bg: #FFE082;
+  --bs-btn-hover-border-color: #ffd54f;
+  --bs-btn-focus-shadow-rgb: 255, 224, 130;
+  --bs-btn-active-color: #212529;
+  --bs-btn-active-bg: #ffca28;
+  --bs-btn-active-border-color: #fbc02d;
+  font-weight: 500;
+}
+
+/* Badges */
+.badge {
+  border-radius: var(--badge-border-radius) !important;
+  padding: var(--space-1) var(--space-2);
+}
+
+.badge.bg-primary {
+  background-color: #FFE082 !important;
+  color: #212529 !important;
+  font-weight: 600;
+}
+
+/* Alerts */
+.alert {
+  border-radius: var(--card-border-radius) !important;
+  padding: var(--space-3) var(--space-4) !important;
+  margin-bottom: var(--space-4) !important;
+}
+
+/* Tables */
+.table > :not(caption) > * > * {
+  padding: var(--table-cell-padding-y) var(--table-cell-padding-x);
+}
+
+.table th {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  color: #6c757d;
+}
+
+/* Utility Class Overrides Driven By Tokens */
+.text-primary {
+  color: #8d5b00 !important;
+}
+
+.bg-primary {
+  background-color: #FFE082 !important;
+  color: #212529 !important;
+}
+
+.bg-primary-subtle {
+  background-color: #fff8e1 !important;
+}
+
+.border-primary-subtle {
+  border-color: #ffe082 !important;
+}
+
+.shadow-sm {
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.shadow {
+  box-shadow: var(--shadow-md) !important;
+}
+
+.shadow-lg {
+  box-shadow: var(--shadow-lg) !important;
+}
+
+.rounded {
+  border-radius: var(--radius-md) !important;
+}
+
+.rounded-sm {
+  border-radius: var(--radius-sm) !important;
+}
+
+.rounded-lg {
+  border-radius: var(--radius-lg) !important;
+}
+
+.rounded-pill {
+  border-radius: var(--radius-pill) !important;
+}
+
+/* Hover Elevation Utility */
+.hover-elevate {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-elevate:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover) !important;
+}
+
+/* Sidebar Responsive Layout */
+@media (min-width: 768px) {
+  .main-content-wrapper {
+    margin-left: var(--admin-sidebar-width) !important;
+  }
+
+  .sidebar {
+    transform: none !important;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .sidebar.sidebar-open {
+    transform: translateX(0) !important;
+  }
+}
+
+/* Nav Item States */
+.hover-bg-light:hover {
+  background-color: #fff8e1;
+  color: #8d5b00 !important;
+}
+
+.sidebar .nav-link {
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+  border-radius: var(--radius-sm) !important;
+  padding: var(--space-2) var(--space-3) !important;
+}
+
+.sidebar .nav-link.active {
+  background-color: #FFE082 !important;
+  color: #212529 !important;
+  font-weight: 600;
+  box-shadow: 0 2px 5px rgba(255, 224, 130, 0.4);
+}
+
+.sidebar .nav-link.active i {
+  color: #8d5b00;
+}
+
+/* Pagination Overrides */
+.page-item.active .page-link {
+  background-color: #FFE082 !important;
+  border-color: #ffd54f !important;
+  color: #212529 !important;
+  font-weight: 600;
+}
+
+.page-link {
+  color: #8d5b00;
+  border-radius: var(--radius-xs);
+  padding: var(--space-2) var(--space-3);
+}
+
+.page-link:hover {
+  color: #6f4700;
+  background-color: #fff8e1;
+}
+
+/* Code Pills */
+code {
+  font-size: 0.85em;
+  color: #b78103;
+  padding: 0.15em 0.35em;
+  border-radius: var(--radius-xs);
+  background-color: #fff8e1;
+}
+
+/* Custom Scrollbar for Sidebar */
+.sidebar ::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sidebar ::-webkit-scrollbar-thumb {
+  background: #ffe082;
+  border-radius: var(--radius-pill);
+}
